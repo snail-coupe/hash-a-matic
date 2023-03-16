@@ -41,7 +41,7 @@ class _Mastodon(BotAccount, iPost, iMessage):
                 text = tmp_text
         return text
 
-    def post(self, post: BotResult, direct: bool = False) -> bool:
+    def post(self, post: BotResult, direct: bool = False, public: bool = True) -> bool:
         post.tags = self.tags + post.tags
 
         media_ids = None
@@ -56,6 +56,8 @@ class _Mastodon(BotAccount, iPost, iMessage):
 
         if direct:
             kwds["visibility"] = "direct"
+        elif not public:
+            kwds["visibility"] = "unlisted"
 
         if media_ids:
             kwds["media_ids"] = media_ids

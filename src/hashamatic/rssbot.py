@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import logging.handlers
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
@@ -16,6 +17,7 @@ from hashamatic.account.mastodon import BotResult, _Mastodon
 credsroot = Path.home() / ".hashBotNG" / "creds"
 config_file = Path.home() / ".hashBotNG" / "configs" / "rssbot.yaml"
 cache_path = Path.home() / ".hashBotNG" / "cache"
+log_path = Path.home() / ".hashBotNG" / "rss.log"
 
 if not cache_path.exists():
     cache_path.mkdir(parents=True, exist_ok=True)
@@ -105,9 +107,9 @@ class RSSBot(_Mastodon):
                     )
                     if not dryrun:
                         logging.debug("%s", str(toot))
-                        self.post(toot)
+                        self.post(toot, public=False)
                     else:
-                        logging.info("%s", str(toot))
+                        logging.info("TOOT: %s", str(toot))
 
             # remove anything published/updated more than a week ago from cache
             weekold = datetime.now().timestamp() - timedelta(days=7).total_seconds()
@@ -135,9 +137,23 @@ def main():
     args = parser.parse_args()
 
     if args.debug:
-        logging.basicConfig(level=logging.DEBUG, force=True)
+        loglvl = logging.DEBUG
     else:
-        logging.basicConfig(level=logging.INFO, force=True)
+        loglvl = logging.INFO
+
+    consolehndlr = logging.StreamHandler()
+    consolehndlr.setLevel(logging.DEBUG)
+    logfilehndlr = logging.handlers.RotatingFileHandler(
+        filename=log_path,
+        maxBytes=16384,
+        backupCount=5,
+    )
+    logfilehndlr.setLevel(logging.INFO)
+
+    logging.basicConfig(
+        level=loglvl, force=True,
+        handlers=[logfilehndlr, consolehndlr]
+    )
 
     if args.bot:
         bots_to_run = [args.bot]
@@ -149,7 +165,7 @@ def main():
     try:
         _ = SingleInstance(lockfile=f"{config_file}.lock")
         for bot in bots_to_run:
-            logging.debug(bot)
+            logging.debug("Running: %s", bot)
             botodon = RSSBot(bot)
             botodon.run(args.dryrun)
     except SingleInstanceException:
