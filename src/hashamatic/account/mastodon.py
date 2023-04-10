@@ -1,6 +1,6 @@
 import io
 from pathlib import Path
-from typing import List
+from typing import List, Optional, Dict, Any
 
 import mastodon.Mastodon as MasApi
 import yaml
@@ -41,7 +41,25 @@ class _Mastodon(BotAccount, iPost, iMessage):
                 text = tmp_text
         return text
 
-    def post(self, post: BotResult, direct: bool = False, public: bool = True) -> bool:
+    def find_latest_convo_with(self, user: str) -> Optional[int]:
+        try:
+            user_dict = self.client.account_lookup(user)
+        except Mastodon.client.MastodonNotFoundError:
+            return None
+        target_id = user_dict.id
+
+        convos = self.client.conversations()
+        while convos:
+            for convo in convos:
+                if len(convo.accounts) == 1:
+                    conv_user = convo.accounts[0]
+                    if target_id == conv_user.id:
+                        return convo.last_status.id
+            convos = self.client.fetch_previous(convos)
+
+        return None
+
+    def post(self, post: BotResult, direct: Optional[str] = None, public: bool = True) -> bool:
         post.tags = self.tags + post.tags
 
         media_ids = None
@@ -52,10 +70,11 @@ class _Mastodon(BotAccount, iPost, iMessage):
             imagedata = imageIO.getvalue()
             media_ids = self.client.media_post(imagedata, mime_type="image/png", description=post.alt_text)
 
-        kwds = dict()
+        kwds: Dict[str, Any] = dict()
 
         if direct:
             kwds["visibility"] = "direct"
+            kwds["in_reply_to_id"] = self.find_latest_convo_with(direct)
         elif not public:
             kwds["visibility"] = "unlisted"
 
@@ -67,7 +86,7 @@ class _Mastodon(BotAccount, iPost, iMessage):
 
     def message(self, user: str, message: BotResult) -> bool:
         message.text = f"@{user} {message.text}"
-        return self.post(message, direct=True)
+        return self.post(message, direct=user)
 
 
 class Mastodon(_Mastodon):
