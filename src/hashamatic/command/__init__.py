@@ -28,7 +28,6 @@ class BotResult():
             self.tags = tags
         else:
             self.tags = []
-        pass
 
     def __str__(self) -> str:
         ret = ""
