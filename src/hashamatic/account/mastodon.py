@@ -97,3 +97,12 @@ class Mastodon(_Mastodon):
     def __init__(self):
         super().__init__()
         self._setAccount(credsroot / "crmbl.uk.yaml")
+
+class Griddle(_Mastodon):
+    ''' Griddle bot '''
+
+    tags = ["Griddle"]
+
+    def __init__(self):
+        super().__init__()
+        self._setAccount(credsroot / "griddle.yaml")
