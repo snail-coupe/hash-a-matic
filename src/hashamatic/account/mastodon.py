@@ -1,8 +1,10 @@
+''' Mastodon Accounts for hashamatic '''
+
 import io
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 
-import mastodon.Mastodon as MasApi
+import mastodon
 import yaml
 
 from hashamatic.account import BotAccount, BotResult, iMessage, iPost
@@ -19,12 +21,13 @@ class _Mastodon(BotAccount, iPost, iMessage):
     ''' A BotAccount for interacting with a Mastodon Account '''
 
     tags: List[str] = []
-    client: MasApi
+    client: mastodon.Mastodon
+    creds: Any
 
-    def _setAccount(self, credspath: Path):
+    def _set_account(self, credspath: Path):
         with credspath.open() as f:
             creds = yaml.safe_load(f)
-            self.client = MasApi(
+            self.client = mastodon.Mastodon(
                 # client_id=creds["client-key"],
                 # client_secret=creds["client-secret"],
                 access_token=creds["access-token"],
@@ -34,6 +37,7 @@ class _Mastodon(BotAccount, iPost, iMessage):
 
     @staticmethod
     def text_and_tags(result: BotResult, limit: int = 500) -> str:
+        ''' apply tags to end of text upto given char limit '''
         text = result.text
         for tag in result.tags:
             tmp_text = f"{text} #{tag}"
@@ -42,6 +46,7 @@ class _Mastodon(BotAccount, iPost, iMessage):
         return text
 
     def find_latest_convo_with(self, user: str) -> Optional[int]:
+        ''' attempt to find id of latest conversation with given user '''
         try:
             user_dict = self.client.account_lookup(user)
         except Mastodon.client.MastodonNotFoundError:
@@ -59,16 +64,25 @@ class _Mastodon(BotAccount, iPost, iMessage):
 
         return None
 
-    def post(self, post: BotResult, direct: Optional[str] = None, public: bool = True) -> bool:
+    def post(
+        self,
+        post: BotResult,
+        direct: Optional[str] = None,
+        public: bool = True
+    ) -> bool:
         post.tags = self.tags + post.tags
 
         media_ids = None
 
         if post.image:
-            imageIO = io.BytesIO()
-            post.image.save(imageIO, format="PNG")
-            imagedata = imageIO.getvalue()
-            media_ids = self.client.media_post(imagedata, mime_type="image/png", description=post.alt_text)
+            image_io = io.BytesIO()
+            post.image.save(image_io, format="PNG")
+            imagedata = image_io.getvalue()
+            media_ids = self.client.media_post(
+                imagedata,
+                mime_type="image/png",
+                description=post.alt_text
+            )
 
         kwds: Dict[str, Any] = dict()
 
@@ -96,7 +110,8 @@ class Mastodon(_Mastodon):
 
     def __init__(self):
         super().__init__()
-        self._setAccount(credsroot / "crmbl.uk.yaml")
+        self._set_account(credsroot / "crmbl.uk.yaml")
+
 
 class Griddle(_Mastodon):
     ''' Griddle bot '''
@@ -105,4 +120,4 @@ class Griddle(_Mastodon):
 
     def __init__(self):
         super().__init__()
-        self._setAccount(credsroot / "griddle.yaml")
+        self._set_account(credsroot / "griddle.yaml")

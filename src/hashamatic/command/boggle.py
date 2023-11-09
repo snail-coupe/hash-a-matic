@@ -1,8 +1,11 @@
 ''' Hashamatic module to generate BoggleTM style game boards '''
 
+# Solver Code based upon: https://www.geeksforgeeks.org/boggle-using-trie/
+# The code is contributed by Nidhi goel.
+
 import logging
 from argparse import ArgumentParser, Namespace
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from random import shuffle, choice, randint
 import importlib.resources
@@ -26,7 +29,7 @@ try:
     class Griddle(BotCmd):
         ''' produces a boggle style word grid '''
 
-        tags: List[str] = ["WordGame", "WordGrid"]
+        tags: List[str] = ["WordGame", "WordGrid", "brainTraining"]
 
         @staticmethod
         def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
@@ -34,13 +37,18 @@ try:
 
         def run(self, _args: Namespace) -> BotResult:
             game = Boggle()
+            words = game.solve()
             return BotResult(
                 image=game.render(),
                 alt_text=" ".join([
                     "Image version of the 4 by 4 word grid,",
                     "with some letters rotated"
                 ]),
-                text=f"\n```\n{game}\n```\n",
+                text="".join([
+                    f"\n```\n{game}\n```\n",
+                    f"I found {len(words)} words.\n",
+                    f"Target {int(len(words) * 2 / 3)}\n"
+                ]),
                 tags=self.tags
             )
 
@@ -82,7 +90,8 @@ class Boggle():
         return font
 
     def __str__(self) -> str:
-        return "\n".join(self.grid)
+        board = [" "+" ".join(list(x))+" " for x in self.grid]
+        return "\n\n".join(board).replace("Q ", "Qu")
 
     def shuffle(self) -> None:
         ''' shuffle the dice '''
@@ -125,11 +134,69 @@ class Boggle():
                 img.paste(letter_img, (24+col*88, 24+row*88))
         return img
 
+    @staticmethod
+    def exist(board: List[List[str]], word: str) -> bool:
+        ''' return true if word exists in the board '''
+        word = word.replace("QU", "Q")
+        for (i, j) in [(x, y) for x in range(4) for y in range(4)]:
+            if board[i][j] == word[0] and Boggle.search(board, word, 0, i, j):
+                return True
+        return False
+
+    @staticmethod
+    def search(
+        board: List[List[str]], word: str,
+        length: int, i: int, j: int
+    ) -> bool:
+        ''' recursive search for each letter in word '''
+        if i < 0 or i >= 4 or j < 0 or j >= 4:
+            return False
+
+        if board[i][j] != word[length]:
+            return False
+
+        if length == len(word) - 1:
+            return True
+
+        ch = board[i][j]
+        board[i][j] = '@'
+
+        ans = Boggle.search(board, word, length+1, i-1, j) or \
+            Boggle.search(board, word, length+1, i+1, j) or \
+            Boggle.search(board, word, length+1, i, j-1) or \
+            Boggle.search(board, word, length+1, i, j+1) or \
+            Boggle.search(board, word, length+1, i-1, j+1) or \
+            Boggle.search(board, word, length+1, i-1, j-1) or \
+            Boggle.search(board, word, length+1, i+1, j-1) or \
+            Boggle.search(board, word, length+1, i+1, j+1)
+
+        board[i][j] = ch
+        return ans
+
+    def solve(self) -> Set[str]:
+        ''' solves the current grid '''
+        temp = set()
+        with importlib.resources.path(
+            "hashamatic.resources", "words.txt"
+        ) as wordlist:
+            st = {
+                x.strip().upper()
+                for x in wordlist.read_text().splitlines()
+            }
+
+        board = [list(x) for x in self.grid]
+        for word in st:
+            if self.exist(board, word):
+                temp.add(word)
+
+        return temp
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, force=True)
     ggame = Boggle()
     logging.info(ggame)
-    ggame.grid=["GRID","DLE ", "WORD","GAME"]
-    i = ggame.render()
-    i.save("temp.png", "PNG")
+    # ggame.grid=["GRID","DLE ", "WORD","GAME"]
+    # i = ggame.render()
+    # i.save("temp.png", "PNG")
+    print(ggame.solve())

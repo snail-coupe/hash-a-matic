@@ -1,3 +1,5 @@
+''' Hashamatic module to generate packings of squares '''
+
 import collections
 import logging
 import random
@@ -36,11 +38,11 @@ try:
                 cols = max(cols, 1)
                 cols = min(cols, 65)
 
-            b = blocksMaker(rows, cols)
+            b = BlocksMaker(rows, cols)
             b.generate()
-            imageRaw = b.render()
+            raw_image = b.render()
             return BotResult(
-                imageRaw, tags=self.tags,
+                raw_image, tags=self.tags,
                 alt_text=f"A computer generated picture of multicoloured squares of various sizes packed into a {cols} by {rows} grid"
             )
 
@@ -54,17 +56,17 @@ try:
 except ImportError:
     logging.debug("failed to import BotCmd interface")
 
-'''
-    first define a grid of 1x1 squares
-    then iterate over each square:
-        1 in probs chance of enterig growth stage
-        if in growth stage repeat maxs-1 times:
-            if room to grow:
-                1 in probi chance of growing by 1
-'''
+# first define a grid of 1x1 squares
+# then iterate over each square:
+#     1 in probs chance of enterig growth stage
+#     if in growth stage repeat maxs-1 times:
+#         if room to grow:
+#             1 in probi chance of growing by 1
 
 
-class blocksMaker():
+class BlocksMaker():
+    ''' generate packings of random sized and coloured blocks '''
+
     map: Dict[int, Dict[int, str]] = collections.defaultdict(dict)
     maxs = 5  # max square size
     probs = 7  # 1:x chance of seed square entering growth

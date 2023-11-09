@@ -12,12 +12,20 @@ from typing import Dict, List, Optional
 from hashamatic.command import BotResult
 
 
-class iPost():
+class iPost():   # pylint:disable=invalid-name
     ''' interface class if you support posting '''
 
+    def post(self, post: BotResult) -> bool:
+        ''' Implement posting here '''
+        raise NotImplementedError
 
-class iMessage():
+
+class iMessage():  # pylint:disable=invalid-name
     ''' interface class if you support sending direct messages'''
+
+    def message(self, user: str, message: BotResult) -> bool:
+        ''' Implement messaging here '''
+        raise NotImplementedError
 
 
 class BotAccount():
@@ -30,16 +38,9 @@ class BotAccount():
         if not cls.__name__.startswith("_"):
             cls.accounts[cls.__name__.lower()] = cls()
 
-    def post(self, post: BotResult) -> bool:
-        ''' Implement posting here '''
-        raise NotImplementedError
-
-    def message(self, user: str, message: BotResult) -> bool:
-        ''' Implement posting here '''
-        raise NotImplementedError
-
     @classmethod
     def get_choices(cls, api: Optional[type] = None) -> List[str]:
+        ''' return the list of valid accounts '''
         ret = []
         for (acc, acc_class) in cls.accounts.items():
             if not api or isinstance(acc_class, api):
@@ -51,6 +52,7 @@ class BotAccount():
 
     @classmethod
     def default(cls) -> BotAccount:
+        ''' return the default account (echo) '''
         return cls.accounts['echo']
 
 
@@ -62,8 +64,11 @@ class Echo(BotAccount, iPost, iMessage):
     def post(self, post: BotResult) -> bool:
         print("Post:")
         if post.image:
-            post.image.show()
             print(f" Has Image ({post.alt_text})")
+            show = input("Display? y/N:").lower()
+            if show.startswith("Y"):
+                post.image.show()
+
         print(f" Text: {post.text}")
         if post.tags:
             print(f" Tags: {' '.join(sorted(post.tags))}")
@@ -94,4 +99,7 @@ for f in glob.glob(os.path.join(
     except ImportWarning as e:
         logging.warning("%s: %s", m.rsplit(".", 1)[0], str(e))
     except ImportError as e:
-        logging.error("Failed to import account handler '%s': %s", m.rsplit(".", 1)[0], e.msg)
+        logging.error(
+            "Failed to import account handler '%s': %s",
+            m.rsplit(".", 1)[0], e.msg
+        )

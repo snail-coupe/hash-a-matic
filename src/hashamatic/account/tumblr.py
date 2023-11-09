@@ -1,3 +1,5 @@
+''' Tumblr Accounts for hashamatic '''
+
 import io
 import os
 import tempfile
@@ -12,19 +14,17 @@ from hashamatic.account import BotAccount, BotResult, iPost
 
 credsroot = Path.home() / ".hashBotNG" / "creds"
 
-'''
-consumer_key: <key>
-consumer_secret: <secret>
-oauth_key: <key>
-oauth_secret: <secret>
-'''
+# consumer_key: <key>
+# consumer_secret: <secret>
+# oauth_key: <key>
+# oauth_secret: <secret>
 
 
 class Tumblr(BotAccount, iPost):
     ''' A Tumblr BotAccount '''
 
     def __init__(self):
-        with open(credsroot / "tumblr.yaml") as f:
+        with open(credsroot / "tumblr.yaml", encoding="ascii") as f:
             creds = yaml.safe_load(f)
             self.npf_client = pytumblr2.TumblrRestClient(
                 creds['consumer_key'], creds['consumer_secret'],
@@ -35,15 +35,16 @@ class Tumblr(BotAccount, iPost):
             self.state = "published"
             self.format = "html"
 
-    def postNpf(self, post: BotResult):
+    def post_npf(self, post: BotResult):
+        ''' post in tumblr's NPF '''
         content = []
         media: Optional[dict] = None
         (tfhandle, tfname) = tempfile.mkstemp()
 
         if post.image:
-            imageIO = io.BytesIO()
-            post.image.save(imageIO, format="PNG")
-            imagedata = imageIO.getvalue()
+            image_io = io.BytesIO()
+            post.image.save(image_io, format="PNG")
+            imagedata = image_io.getvalue()
             tfio = os.fdopen(tfhandle, "wb")
             tfio.write(imagedata)
             tfio.close()
@@ -80,7 +81,8 @@ class Tumblr(BotAccount, iPost):
         if os.path.exists(tfname):
             os.unlink(tfname)
 
-    def postText(self, text: str, tags: List[str]):
+    def post_plaintext(self, text: str, tags: List[str]):
+        ''' post plaintext '''
         self.npf_client.legacy_create_text(
             'hashamatic.tumblr.com',
             state=self.state,
@@ -89,11 +91,12 @@ class Tumblr(BotAccount, iPost):
             tags=list(tags)
         )
 
-    def postImage(self, imageRaw: Image, caption: str, tags: List[str]):
+    def post_image(self, raw_image: Image, caption: str, tags: List[str]):
+        ''' post an image in old format '''
         (tfhandle, tfname) = tempfile.mkstemp()
-        imageIO = io.BytesIO()
-        imageRaw.save(imageIO, format="PNG")
-        imagedata = imageIO.getvalue()
+        image_io = io.BytesIO()
+        raw_image.save(image_io, format="PNG")
+        imagedata = image_io.getvalue()
         tfio = os.fdopen(tfhandle, "wb")
         tfio.write(imagedata)
         tfio.close()
@@ -111,4 +114,4 @@ class Tumblr(BotAccount, iPost):
     def post(self, post: BotResult) -> bool:
         post.tags = ["hashAmatic"] + post.tags
 
-        return self.postNpf(post)
+        return self.post_npf(post)

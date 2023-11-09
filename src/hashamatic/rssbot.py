@@ -29,6 +29,8 @@ bots = config.keys()
 
 
 def parse_item_time(s: str) -> datetime:
+    ''' trial string to time conversion based upon
+        observed formats '''
     try:
         return datetime.strptime(s, "%a, %d %b %Y %H:%M:%S %Z")
     except ValueError:
@@ -41,21 +43,26 @@ def parse_item_time(s: str) -> datetime:
 
 
 class RSSBot(_Mastodon):
+    ''' Mastobot specialised for RSS Feeds '''
     def __init__(self, bot: Optional[str] = None) -> None:
         super().__init__()
         if bot:
             self.bot = bot
-            self._setAccount(credsroot / f"{config[self.bot]['account']}.yaml")
+            self._set_account(
+                credsroot / f"{config[self.bot]['account']}.yaml"
+            )
             self.url = config[self.bot]["url"]
 
     @staticmethod
     def get_ttl(soup) -> Union[timedelta, None]:
+        ''' attempt to determine TTL for feed as timedelta '''
         ttl = soup.select("rss channel ttl")
         if ttl:
             return timedelta(minutes=int(ttl[0].text))
         return None
 
     def run(self, dryrun: bool = False):
+        ''' run the process '''
         try:
             guid_path = cache_path / f"{self.bot}_guids.yaml"
             xml_path = cache_path / f"{self.url.split('//')[1]}"
@@ -73,7 +80,9 @@ class RSSBot(_Mastodon):
                 soup = BeautifulSoup(xml_path.read_bytes(), features="xml")
                 ttl = self.get_ttl(soup)
                 if ttl:
-                    expire_time = datetime.fromtimestamp(xml_path.stat().st_mtime) + ttl
+                    expire_time = ttl + datetime.fromtimestamp(
+                        xml_path.stat().st_mtime
+                    )
                     if expire_time < datetime.now():
                         logging.debug("Feed Stale")
                         soup = None
@@ -95,10 +104,17 @@ class RSSBot(_Mastodon):
             ):
                 itime = parse_item_time(item.pubDate.text)
                 nguids[item.guid.text] = [item.pubDate.text, item.title.text]
-                if itime.timestamp() < (datetime.now().timestamp() - timedelta(hours=24).total_seconds()):
-                    # never (re-)publish anything published/updated more than a day ago
+                if itime.timestamp() < (
+                    datetime.now().timestamp()
+                    - timedelta(hours=24).total_seconds()
+                ):
+                    # never (re-)publish anything published/updated
+                    # more than a day ago
                     continue
-                logging.debug(f"{item.guid.text}: {itime} : {item.title.text}")
+                logging.debug(
+                    "%s: %s : %s",
+                    item.guid.text, str(itime), item.title.text
+                )
                 if item.guid.text not in oguids:
                     url = item.link.text.split("?")[0]
                     toot = BotResult(
@@ -130,6 +146,7 @@ class RSSBot(_Mastodon):
 
 
 def main():
+    ''' main () '''
     parser = argparse.ArgumentParser()
     parser.add_argument("bot", choices=bots, help="Bot to run", nargs='?')
     parser.add_argument("--debug", "-d", action="store_true")
