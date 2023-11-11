@@ -36,9 +36,16 @@ class _Mastodon(BotAccount, iPost, iMessage):
             self.creds = creds
 
     @staticmethod
-    def text_and_tags(result: BotResult, limit: int = 500) -> str:
+    def text_and_tags(
+        result: BotResult,
+        direct: Optional[str] = None,
+        limit: int = 500
+    ) -> str:
         ''' apply tags to end of text upto given char limit '''
-        text = result.text
+        if direct:
+            text = f"@{direct} {result.text}"
+        else:
+            text = result.text
         for tag in result.tags:
             tmp_text = f"{text} #{tag}"
             if len(tmp_text) <= limit:
@@ -68,38 +75,53 @@ class _Mastodon(BotAccount, iPost, iMessage):
         self,
         post: BotResult,
         direct: Optional[str] = None,
-        public: bool = True
+        public: bool = True,
+        in_reply_to: Optional[str] = None
     ) -> bool:
         post.tags = self.tags + post.tags
 
-        media_ids = None
+        node: Optional[BotResult] = post
+        while node:
+            self.logger.info("Post (%s)", in_reply_to)
 
-        if post.image:
-            image_io = io.BytesIO()
-            post.image.save(image_io, format="PNG")
-            imagedata = image_io.getvalue()
-            media_ids = self.client.media_post(
-                imagedata,
-                mime_type="image/png",
-                description=post.alt_text
+            media_ids = None
+
+            if node.image:
+                image_io = io.BytesIO()
+                node.image.save(image_io, format="PNG")
+                imagedata = image_io.getvalue()
+                media_ids = self.client.media_post(
+                    imagedata,
+                    mime_type="image/png",
+                    description=node.alt_text
+                )
+
+            kwds: Dict[str, Any] = dict()
+
+            if direct:
+                kwds["visibility"] = "direct"
+                kwds["in_reply_to_id"] = self.find_latest_convo_with(direct)
+            elif not public:
+                kwds["visibility"] = "unlisted"
+
+            if in_reply_to:
+                kwds["in_reply_to_id"] = in_reply_to
+
+            if media_ids:
+                kwds["media_ids"] = media_ids
+
+            if node.warning:
+                kwds["spoiler_text"] = node.warning
+
+            result = self.client.status_post(
+                self.text_and_tags(node, direct), **kwds
             )
+            in_reply_to = result['id']
+            node = node.next
 
-        kwds: Dict[str, Any] = dict()
-
-        if direct:
-            kwds["visibility"] = "direct"
-            kwds["in_reply_to_id"] = self.find_latest_convo_with(direct)
-        elif not public:
-            kwds["visibility"] = "unlisted"
-
-        if media_ids:
-            kwds["media_ids"] = media_ids
-
-        self.client.status_post(self.text_and_tags(post), **kwds)
         return True
 
     def message(self, user: str, message: BotResult) -> bool:
-        message.text = f"@{user} {message.text}"
         return self.post(message, direct=user)
 
 

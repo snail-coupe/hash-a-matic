@@ -21,15 +21,18 @@ class BotResult():
         image: Optional[Image] = None,
         text: str = "",
         tags: Optional[List[str]] = None,
-        alt_text: Optional[str] = None
+        alt_text: Optional[str] = None,
+        warning: Optional[str] = None
     ) -> None:
         self.image = image
         self.text = str(text)
         self.alt_text = alt_text
+        self.warning = warning
         if tags:
             self.tags = tags
         else:
             self.tags = []
+        self.next: Optional[BotResult] = None
 
     def __str__(self) -> str:
         ret = ""
@@ -39,6 +42,13 @@ class BotResult():
         if self.tags:
             ret += f" Tags: {' '.join(sorted(self.tags))}\n"
         return ret.strip()
+
+    def append(self, child: BotResult):
+        ''' append a BotResult to the end of the list '''
+        node = self
+        while node.next:
+            node = node.next
+        node.next = child
 
 
 class iRandom:  # pylint:disable=invalid-name

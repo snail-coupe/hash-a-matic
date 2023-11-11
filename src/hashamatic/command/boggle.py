@@ -5,17 +5,35 @@
 
 import logging
 from argparse import ArgumentParser, Namespace
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Dict
 
 from random import shuffle, choice, randint
 import importlib.resources
 
 from itertools import zip_longest
 
-
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
+
+
+class FixedWidth:
+    ''' produce fixed width text '''
+
+    lookup: Dict[str, str] = {}
+
+    lookup['\n'] = '\n'
+    lookup[" "] = chr(0x3000)
+    for char in range(26):
+        lookup[chr(0x41 + char)] = chr(0xff21 + char)
+        lookup[chr(0x61 + char)] = chr(0xff41 + char)
+
+    @classmethod
+    def encode(cls, text: str) -> str:
+        ''' return encoded string '''
+        return "".join([
+            cls.lookup[x] for x in text
+        ])
 
 
 def grouper(n, iterable, padvalue=None):
@@ -38,19 +56,32 @@ try:
         def run(self, _args: Namespace) -> BotResult:
             game = Boggle()
             words = game.solve()
-            return BotResult(
+            post = BotResult(
                 image=game.render(),
                 alt_text=" ".join([
                     "Image version of the 4 by 4 word grid,",
                     "with some letters rotated"
                 ]),
                 text="".join([
-                    f"\n```\n{game}\n```\n",
+                    f"\n{game}\n",
                     f"I found {len(words)} words.\n",
                     f"Target {int(len(words) * 2 / 3)}\n"
                 ]),
                 tags=self.tags
             )
+            text = ", ".join(sorted(list(words)))
+            while text:
+                if len(text) > 450:
+                    split = text[:450].rindex(", ")
+                else:
+                    split = len(text)
+                post.append(BotResult(
+                    text=text[:split],
+                    warning="Spoiler: My solution"
+                ))
+                text = text[split+2:]
+
+            return post
 
         def random(self) -> BotResult:
             parser = self.add_argparse_arguments(ArgumentParser())
@@ -71,7 +102,7 @@ class Boggle():
             "AACIOT", "ABILTY", "ABJMOQ", "ACDEMP",
             "ACELRS", "ADENVZ", "AHMORS", "BIFORX",
             "DENOSW", "DKNOTU", "EEFHIY", "EGKLUY",
-            "EGINTV", "EHINPS", "ELPSTU", "GILRUW"
+            "EGINTV", "EHINPS", "ELPSTU",  "GILRUW"
         ]
         self.shuffle()
         if not self.font:
@@ -90,8 +121,9 @@ class Boggle():
         return font
 
     def __str__(self) -> str:
-        board = [" "+" ".join(list(x))+" " for x in self.grid]
-        return "\n\n".join(board).replace("Q ", "Qu")
+        return FixedWidth.encode("\n\n".join([
+            "  ".join(list(x)) for x in self.grid
+        ]).replace("Q ", "Qu"))
 
     def shuffle(self) -> None:
         ''' shuffle the dice '''
@@ -195,8 +227,10 @@ class Boggle():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, force=True)
     ggame = Boggle()
-    logging.info(ggame)
     # ggame.grid=["GRID","DLE ", "WORD","GAME"]
     # i = ggame.render()
     # i.save("temp.png", "PNG")
-    print(ggame.solve())
+    print(ggame.grid)
+    print(ggame)
+    # print(ggame.solve())
+    print(FixedWidth.encode("Hello   Mum"))

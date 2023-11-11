@@ -36,7 +36,11 @@ class BotAccount():
     def __init_subclass__(cls, /, **kwargs):
         super().__init_subclass__(**kwargs)
         if not cls.__name__.startswith("_"):
+            cls._name = cls.__name__
             cls.accounts[cls.__name__.lower()] = cls()
+
+    def __init__(self):
+        self.logger = logging.getLogger(self._name)
 
     @classmethod
     def get_choices(cls, api: Optional[type] = None) -> List[str]:
@@ -59,29 +63,36 @@ class BotAccount():
 class Echo(BotAccount, iPost, iMessage):
     ''' A simple "echo to stdout" BotAccount '''
 
-    logger = logging.getLogger("Echo")
-
     def post(self, post: BotResult) -> bool:
         print("Post:")
-        if post.image:
-            print(f" Has Image ({post.alt_text})")
-            show = input("Display? y/N:").lower()
-            if show.startswith("Y"):
-                post.image.show()
-
-        print(f" Text: {post.text}")
-        if post.tags:
-            print(f" Tags: {' '.join(sorted(post.tags))}")
+        node: Optional[BotResult] = post
+        while node:
+            if node.warning:
+                print(f"WARNING: {node.warning}")
+            if node.image:
+                print(f" Has Image ({node.alt_text})")
+                show = input("Display? y/N:").lower()
+                if show.startswith("Y"):
+                    node.image.show()
+            print(f" Text: {node.text}")
+            if node.tags:
+                print(f" Tags: {' '.join(sorted(node.tags))}")
+            node = node.next
         return True
 
     def message(self, user: str, message: BotResult) -> bool:
         print(f"Msg To: {user}")
-        if message.image:
-            print(f" Has Image ({message.alt_text})")
-            filename = input("Save File As [don't save]:").strip()
-            if filename:
-                message.image.save(filename)
-        print(f"Text: {message.text}")
+        node: Optional[BotResult] = message
+        while node:
+            if node.warning:
+                print(f"WARNING: {node.warning}")
+            if node.image:
+                print(f" Has Image ({node.alt_text})")
+                filename = input("Save File As [don't save]:").strip()
+                if filename:
+                    node.image.save(filename)
+            print(f"Text: {node.text}")
+            node = node.next
         return True
 
 
