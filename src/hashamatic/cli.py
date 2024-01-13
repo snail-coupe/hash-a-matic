@@ -1,3 +1,5 @@
+''' hashamatic primary CLI '''
+
 import argparse
 import importlib
 import logging
@@ -15,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 @with_default_category("Control")  # type: ignore
 class BotShell(cmd2.Cmd):
+    ''' cmd2 shell for running bots '''
 
     account: BotAccount = BotAccount.default()
     prompt: str = f"{account.__class__.__name__}> "
@@ -24,14 +27,21 @@ class BotShell(cmd2.Cmd):
 
     @with_argparser(acc_parser)  # type:  ignore
     def do_switch(self, args: argparse.Namespace):
+        ''' switch active account '''
         self.account = BotAccount.accounts[args.account]
         self.prompt = f"{self.account.__class__.__name__}> "
         self.enable_category("Posting")
         self.enable_category("Direct Messages")
         if not isinstance(self.account, iPost):
-            self.disable_category("Posting", "This account handler doesn't support posting")
+            self.disable_category(
+                "Posting",
+                "This account handler doesn't support posting"
+            )
         if not isinstance(self.account, iMessage):
-            self.disable_category("Direct Messages", "This account handler doesn't support direct messages")
+            self.disable_category(
+                "Direct Messages",
+                "This account handler doesn't support direct messages"
+            )
 
     if BotAccount.post_choices():
         post_parser = argparse.ArgumentParser()
@@ -40,8 +50,12 @@ class BotShell(cmd2.Cmd):
         @with_category("Posting")  # type: ignore
         @with_argparser(post_parser)  # type: ignore
         def do_post(self, args: argparse.Namespace):
-            output = BotCmd.runner(args)
-            self.account.post(output)
+            ''' run command and post output '''
+            if isinstance(self.account, iPost):
+                output = BotCmd.runner(args)
+                self.account.post(output)
+            else:
+                logger.error("%s can't post", self.account)
 
     if BotAccount.message_choices():
         dm_parser = argparse.ArgumentParser()
@@ -51,14 +65,26 @@ class BotShell(cmd2.Cmd):
         @with_category("Direct Messages")  # type: ignore
         @with_argparser(dm_parser)  # type: ignore
         def do_dm(self, args: argparse.Namespace):
-            output = BotCmd.runner(args)
-            self.account.message(args.user, output)
+            ''' run command and message output '''
+            if isinstance(self.account, iMessage):
+                output = BotCmd.runner(args)
+                self.account.message(args.user, output)
+            else:
+                logger.error("%s can't post", self.account)
 
     reload_parser = argparse.ArgumentParser()
-    reload_parser.add_argument("module", choices=list(BotAccount.accounts.keys()) + list(BotCmd.commands.keys()))
+    reload_parser.add_argument(
+        "module",
+        choices=list(
+            BotAccount.accounts.keys()
+        ) + list(
+            BotCmd.commands.keys()
+        )
+    )
 
     @with_argparser(reload_parser)  # type: ignore
     def do_reload(self, args: argparse.Namespace):
+        ''' force reload of module '''
         module_name = None
         if args.module in BotAccount.accounts:
             logger.info("Reloading BotAccount Module: %s", args.module)
@@ -74,6 +100,7 @@ class BotShell(cmd2.Cmd):
 
 
 def main():
+    ''' main () '''
     parser = argparse.ArgumentParser()
     parser.add_argument("account", choices=BotAccount.get_choices(), nargs='?')
 
@@ -96,7 +123,7 @@ def main():
         shell.onecmd_plus_hooks("set debug True")
 
     if args.account:
-        logging.info(f"switch {args.account}")
+        logging.info("switch %s", args.account)
         shell.onecmd_plus_hooks(f"switch {args.account}")
 
     if remaining:
