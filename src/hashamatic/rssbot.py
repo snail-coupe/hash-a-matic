@@ -117,10 +117,16 @@ class RSSBot(_Mastodon):
                 )
                 if item.guid.text not in oguids:
                     url = item.link.text.split("?")[0]
-                    toot = BotResult(
-                        text=f"{item.title.text}\n\n{url} ({itime.strftime('%c %Z')})\n\n{item.description.text}\n\n",
-                        tags=["News", "📰"] + config[self.bot]["tags"]
-                    )
+                    if item.description:
+                        toot = BotResult(
+                            text=f"{item.title.text}\n\n{url} ({itime.strftime('%c %Z')})\n\n{item.description.text}\n\n",
+                            tags=["News", "📰"] + config[self.bot]["tags"]
+                        )
+                    else:
+                        toot = BotResult(
+                            text=f"{item.title.text}\n\n{url} ({itime.strftime('%c %Z')})\n\n",
+                            tags=["News", "📰"] + config[self.bot]["tags"]
+                        )
                     if not dryrun:
                         logging.debug("%s", str(toot))
                         self.post(toot, public=False)

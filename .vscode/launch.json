@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Mastobot",
+            "type": "python",
+            "request": "launch",
+            "module": "hashamatic.mastobot",
+            "justMyCode": false
+        },
+        {
             "name": "Python: Hash-a-matic CLI",
             "type": "python",
             "request": "launch",
@@ -17,7 +24,11 @@
             "type": "python",
             "request": "launch",
             "program": "src/hashamatic/rssbot.py",
-            "args": ["-n", "Glos-Live"],
+            "args": [
+                "-d",
+                "-n",
+                "BBC-UK-News"
+            ],
             "console": "integratedTerminal",
             "justMyCode": true
         }
