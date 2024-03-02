@@ -205,9 +205,9 @@ class MazeMaker():
 
     def apply_shape(self, shape: List[List[int]], xos, yos):
         ''' applies the supplied shape as a solid section of maze '''
-        for ypos in range(0, len(shape)):
-            for xpos in range(0, len(shape[ypos])):
-                if shape[ypos][xpos]:
+        for ypos, xdata in enumerate(shape):
+            for xpos, solid in enumerate(xdata):
+                if solid:
                     self.maze[(xpos + xos + 1, ypos + yos + 1)].visited = True
                     self.maze[(xpos + xos + 1, ypos + yos + 1)].solid = True
 

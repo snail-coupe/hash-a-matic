@@ -21,14 +21,14 @@ try:
 
         def run(self, _args: Namespace) -> BotResult:
             return BotResult(
-                fractalMap(256).render(), text=self.caption, tags=self.tags,
+                FractalMap(256).render(), text=self.caption, tags=self.tags,
                 alt_text="A computer generated, multi-coloured, fractal plasma. Generated using the Diamond-Square algorithm."
             )
 except ImportError:
     logging.debug("failed to import BotCmd interface")
 
 
-class fractalMap():
+class FractalMap():
     ''' a bad implmentation of a cloud fractal:
         https://en.wikipedia.org/wiki/Diamond-square_algorithm '''
 
@@ -112,7 +112,7 @@ class fractalMap():
         for p in self.heights.keys():
             self.heights[p] = (self.heights[p] - mn) * f
 
-    def renderBlocks(self):
+    def render_blocks(self):
         s = self.block_size
         m = int(s / 2)
         for xb in range(0, self.xb):
@@ -133,17 +133,17 @@ class fractalMap():
         draw = ImageDraw.Draw(img)
 
         self.reset()
-        self.renderBlocks()
+        self.render_blocks()
         self.normalise()
         red = dict(self.heights)
 
         self.reset()
-        self.renderBlocks()
+        self.render_blocks()
         self.normalise()
         green = dict(self.heights)
 
         self.reset()
-        self.renderBlocks()
+        self.render_blocks()
         self.normalise()
         blue = dict(self.heights)
 
@@ -157,6 +157,6 @@ class fractalMap():
 
 
 if __name__ == "__main__":
-    t = fractalMap(128, 3, 2)
+    t = FractalMap(128, 3, 2)
     i = t.render()
     i.save("temp.png", "PNG")
