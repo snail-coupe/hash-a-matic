@@ -4,7 +4,7 @@ import io
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 
-import mastodon
+import mastodon  # type: ignore
 import yaml
 
 from hashamatic.account import BotAccount, BotResult, iMessage, iPost

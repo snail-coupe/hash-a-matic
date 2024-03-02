@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional
 
-import pytumblr2
+import pytumblr2  # type: ignore
 import yaml
 from PIL.Image import Image
 
@@ -34,6 +34,7 @@ class Tumblr(BotAccount, iPost):
             self._creds = creds
             self.state = "published"
             self.format = "html"
+        super().__init__()
 
     def post_npf(self, post: BotResult):
         ''' post in tumblr's NPF '''

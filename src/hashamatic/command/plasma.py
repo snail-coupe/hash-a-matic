@@ -1,3 +1,5 @@
+''' plasma/space cloud '''
+
 import collections
 import logging
 import random
@@ -17,21 +19,21 @@ try:
         tags: List[str] = ["plasma", "cloud", "☁️", "fractal", "art", "botArt"]
         caption = "Look at this space cloud I made."
 
-        def run(self, args: Namespace) -> BotResult:
+        def run(self, _args: Namespace) -> BotResult:
             return BotResult(
-                fractalMap(256).render(), text=self.caption, tags=self.tags,
+                FractalMap(256).render(), text=self.caption, tags=self.tags,
                 alt_text="A computer generated, multi-coloured, fractal plasma. Generated using the Diamond-Square algorithm."
             )
 except ImportError:
     logging.debug("failed to import BotCmd interface")
 
 
-class fractalMap():
+class FractalMap():
     ''' a bad implmentation of a cloud fractal:
         https://en.wikipedia.org/wiki/Diamond-square_algorithm '''
 
-    def __init__(self, blockSize: int = 256, xb: int = 1, yb: int = 1):
-        self.blockSize = blockSize
+    def __init__(self, block_size: int = 256, xb: int = 1, yb: int = 1):
+        self.block_size = block_size
         self.xb = xb
         self.yb = yb
         self.heights: Dict[Tuple[int, int], float] = collections.defaultdict(float)
@@ -40,7 +42,7 @@ class fractalMap():
     def reset(self):
         self.heights = collections.defaultdict(float)
 
-    def plusAv(self, x: int, y: int, d: int):
+    def plus_av(self, x: int, y: int, d: int):
         if (x, y) in self.heights:
             return
 
@@ -55,7 +57,7 @@ class fractalMap():
             v.append(self.heights[(x, y + d)])
         self.heights[(x, y)] = sum(v) / len(v) + self.v(d)
 
-    def crossAv(self, x: int, y: int, d: int):
+    def cross_av(self, x: int, y: int, d: int):
         if (x, y) in self.heights:
             return
         v = list()
@@ -69,7 +71,7 @@ class fractalMap():
             v.append(self.heights[(x + d, y + d)])
         self.heights[(x, y)] = sum(v) / len(v) + self.v(d)
 
-    def midFill(self, x: int, y: int, s: int):
+    def mid_fill(self, x: int, y: int, s: int):
         # A.2.A
         # .3.3.
         # 2.1.2
@@ -78,30 +80,29 @@ class fractalMap():
 
         m = int(s / 2)
         # now fill in 2
-        self.plusAv(x + m, y, m)
-        self.plusAv(x, y + m, m)
-        self.plusAv(x + m, y + s, m)
-        self.plusAv(x + s, y + m, m)
+        self.plus_av(x + m, y, m)
+        self.plus_av(x, y + m, m)
+        self.plus_av(x + m, y + s, m)
+        self.plus_av(x + s, y + m, m)
 
         if m > 1:
             n = int(m / 2)
 
             # now fill in 3
-            self.crossAv(x + n, y + n, n)
-            self.crossAv(x + n + m, y + n, n)
-            self.crossAv(x + n, y + n + m, n)
-            self.crossAv(x + n + m, y + n + m, n)
+            self.cross_av(x + n, y + n, n)
+            self.cross_av(x + n + m, y + n, n)
+            self.cross_av(x + n, y + n + m, n)
+            self.cross_av(x + n + m, y + n + m, n)
 
             # and recurse
-            self.midFill(x, y, m)
-            self.midFill(x + m, y, m)
-            self.midFill(x, y + m, m)
-            self.midFill(x + m, y + m, m)
+            self.mid_fill(x, y, m)
+            self.mid_fill(x + m, y, m)
+            self.mid_fill(x, y + m, m)
+            self.mid_fill(x + m, y + m, m)
 
     def normalise(self):
         mn = mx = self.heights[(0, 0)]
-        for p in self.heights.keys():
-            d = self.heights[p]
+        for d in self.heights.values():
             if d < mn:
                 mn = d
             if d > mx:
@@ -111,8 +112,8 @@ class fractalMap():
         for p in self.heights.keys():
             self.heights[p] = (self.heights[p] - mn) * f
 
-    def renderBlocks(self):
-        s = self.blockSize
+    def render_blocks(self):
+        s = self.block_size
         m = int(s / 2)
         for xb in range(0, self.xb):
             x = xb * s
@@ -122,27 +123,27 @@ class fractalMap():
                     if corner not in self.heights:
                         self.heights[corner] = random.uniform(0, 256)
                 if (x + m, y + m) not in self.heights:
-                    self.crossAv(x + m, y + m, m)
-                self.midFill(x, y, s)
+                    self.cross_av(x + m, y + m, m)
+                self.mid_fill(x, y, s)
 
     def render(self) -> Image:
         img = NewImage("RGB", (
-            self.blockSize * self.xb, self.blockSize * self.yb
+            self.block_size * self.xb, self.block_size * self.yb
         ))
         draw = ImageDraw.Draw(img)
 
         self.reset()
-        self.renderBlocks()
+        self.render_blocks()
         self.normalise()
         red = dict(self.heights)
 
         self.reset()
-        self.renderBlocks()
+        self.render_blocks()
         self.normalise()
         green = dict(self.heights)
 
         self.reset()
-        self.renderBlocks()
+        self.render_blocks()
         self.normalise()
         blue = dict(self.heights)
 
@@ -156,6 +157,6 @@ class fractalMap():
 
 
 if __name__ == "__main__":
-    t = fractalMap(128, 3, 2)
+    t = FractalMap(128, 3, 2)
     i = t.render()
     i.save("temp.png", "PNG")

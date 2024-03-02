@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import collections
+import collections.abc
 import logging
 import random
 from argparse import ArgumentParser, Namespace
@@ -19,6 +20,10 @@ try:
 
         tags: List[str] = ["maze", "fractal", "brainTraining"]
         caption = "Can you find your way through my maze?"
+
+        def run(self, _args: Namespace) -> BotResult:
+            ''' this runs the command '''
+            raise NotImplementedError
 
     class Maze(_Maze, iRandom):
         ''' A Random Maze '''
@@ -160,7 +165,8 @@ class MazeMaker():
 
     @classmethod
     def from_text(cls, text: Union[Sequence[str], str], padding: int) -> MazeMaker:
-        if isinstance(text, collections.Sequence):
+        ''' generates a MazeMaker containing text '''
+        if isinstance(text, collections.abc.Sequence):
             if len(text) > 3:
                 text = text[:3]
             text = "\n".join(text)
@@ -181,6 +187,7 @@ class MazeMaker():
 
     @classmethod
     def from_emoji(cls, emoji: str, padding: int) -> MazeMaker:
+        ''' returns a MazeMaker that makes a maze around an emoji '''
         fnt = ImageFont.truetype('/usr/share/fonts/truetype/ancient-scripts/Symbola_hint.ttf', 48)
         (left, top, right, bottom) = ImageDraw.Draw(NewImage('1', (1, 1))).multiline_textbbox((0, 0), emoji[:1], font=fnt)
         logging.debug("%d %d %d %d", left, top, right, bottom)
@@ -198,9 +205,9 @@ class MazeMaker():
 
     def apply_shape(self, shape: List[List[int]], xos, yos):
         ''' applies the supplied shape as a solid section of maze '''
-        for ypos in range(0, len(shape)):
-            for xpos in range(0, len(shape[ypos])):
-                if shape[ypos][xpos]:
+        for ypos, xdata in enumerate(shape):
+            for xpos, solid in enumerate(xdata):
+                if solid:
                     self.maze[(xpos + xos + 1, ypos + yos + 1)].visited = True
                     self.maze[(xpos + xos + 1, ypos + yos + 1)].solid = True
 
@@ -266,18 +273,18 @@ class MazeMaker():
                 xcs = xos * cell_size
                 ycs = yos * cell_size
                 if not cell.solid:
-                    draw.rectangle([
+                    draw.rectangle((
                         (xcs + 1, ycs + 1),
                         (xcs + cell_size - 2, ycs + cell_size - 2)
-                    ], floor_color)
+                    ), floor_color)
                 if not cell.left:
-                    draw.rectangle([(xcs, ycs + 1), (xcs + 1, ycs + cell_size - 2)], floor_color)
+                    draw.rectangle(((xcs, ycs + 1), (xcs + 1, ycs + cell_size - 2)), floor_color)
                 if not cell.right:
-                    draw.rectangle([(xcs + cell_size - 2, ycs + 1), (xcs + cell_size - 1, ycs + cell_size - 2)], floor_color)
+                    draw.rectangle(((xcs + cell_size - 2, ycs + 1), (xcs + cell_size - 1, ycs + cell_size - 2)), floor_color)
                 if not cell.top:
-                    draw.rectangle([(xcs + 1, ycs), (xcs + cell_size - 2, ycs + 1)], floor_color)
+                    draw.rectangle(((xcs + 1, ycs), (xcs + cell_size - 2, ycs + 1)), floor_color)
                 if not cell.bottom:
-                    draw.rectangle([(xcs + 1, ycs + cell_size - 2), (xcs + cell_size - 2, ycs + cell_size - 1)], floor_color)
+                    draw.rectangle(((xcs + 1, ycs + cell_size - 2), (xcs + cell_size - 2, ycs + cell_size - 1)), floor_color)
         draw.regular_polygon(
             (cell_size / 2, cell_size / 2, cell_size / 2),
             n_sides=5,
@@ -294,7 +301,7 @@ class MazeMaker():
         return img
 
     def render_as_mask(self, cell_size: int = 16) -> Image:
-        mask = Image.new("1", (
+        mask = NewImage("1", (
             self.width * cell_size, self.height * cell_size
         ))
         draw = ImageDraw.Draw(mask)
@@ -304,18 +311,18 @@ class MazeMaker():
                 cell = self.get_cell(xos + 1, yos + 1)
                 xcs = xos * cell_size
                 ycs = yos * cell_size
-                draw.rectangle([
+                draw.rectangle((
                     (xcs + 1, ycs + 1),
                     (xcs + cell_size - 2, ycs + cell_size - 2)
-                ], True)
+                ), True)
                 if not cell.left:
-                    draw.rectangle([(xcs, ycs + 1), (xcs + 1, ycs + cell_size - 2)], True)
+                    draw.rectangle(((xcs, ycs + 1), (xcs + 1, ycs + cell_size - 2)), True)
                 if not cell.right:
-                    draw.rectangle([(xcs + cell_size - 2, ycs + 1), (xcs + cell_size - 1, ycs + cell_size - 2)], True)
+                    draw.rectangle(((xcs + cell_size - 2, ycs + 1), (xcs + cell_size - 1, ycs + cell_size - 2)), True)
                 if not cell.top:
-                    draw.rectangle([(xcs + 1, ycs), (xcs + cell_size - 2, ycs + 1)], True)
+                    draw.rectangle(((xcs + 1, ycs), (xcs + cell_size - 2, ycs + 1)), True)
                 if not cell.bottom:
-                    draw.rectangle([(xcs + 1, ycs + cell_size - 2), (xcs + cell_size - 2, ycs + cell_size - 1)], True)
+                    draw.rectangle(((xcs + 1, ycs + cell_size - 2), (xcs + cell_size - 2, ycs + cell_size - 1)), True)
 
         return mask
 

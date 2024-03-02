@@ -1,10 +1,12 @@
+''' attempt to make some sort of caverns '''
+
 from __future__ import annotations
 
 import collections
 import logging
 import random
 from argparse import ArgumentParser, Namespace
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 from PIL import ImageDraw
 from PIL.Image import Image
@@ -22,13 +24,13 @@ try:
         def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
             return parser
 
-        def run(self, args: Namespace) -> BotResult:
+        def run(self, _args: Namespace) -> BotResult:
             # imageRaw = fractalCaves(256).generate().render()
-            t = fractalCaves(64, iterations=2).generate().double()
+            t = FractalCaves(64, iterations=2).generate().double()
             t.smooth(1).double().smooth(1).double().smooth(4)
-            imageRaw = t.render()
+            image_raw = t.render()
             return BotResult(
-                imageRaw, tags=self.tags,
+                image_raw, tags=self.tags,
                 alt_text="A computer generated fractal map using the 5:4 algorithm."
             )
 
@@ -36,10 +38,10 @@ except ImportError:
     logging.debug("failed to import BotCmd interface")
 
 
-class fractalCaves():
+class FractalCaves():
     ''' a bad implmentation of a fractal map using 5:4 '''
 
-    def __init__(self, x: int = 64, y: int = None, iterations=5):
+    def __init__(self, x: int = 64, y: Optional[int] = None, iterations=5):
         self.x = x
         if y:
             self.y = y
@@ -49,26 +51,29 @@ class fractalCaves():
         self.land: Dict[Tuple[int, int], bool] = collections.defaultdict(bool)
 
     def reset(self):
+        ''' reset the land '''
         self.land = collections.defaultdict(bool)
         for x in range(self.x):
             for y in range(self.y):
                 self.land[(x, y)] = random.random() > 0.55
 
-    def double(self) -> fractalCaves:
-        newLand = collections.defaultdict(bool)
+    def double(self) -> FractalCaves:
+        ''' double the resolution '''
+        new_land = collections.defaultdict(bool)
         self.x = self.x * 2
         self.y = self.y * 2
         for x in range(0, self.x, 2):
             for y in range(0, self.y, 2):
                 v = self.land[(int(x / 2), int(y / 2))]
-                newLand[(x, y)] = v
-                newLand[(x + 1, y)] = v
-                newLand[(x, y + 1)] = v
-                newLand[(x + 1, y + 1)] = v
-        self.land = newLand
+                new_land[(x, y)] = v
+                new_land[(x + 1, y)] = v
+                new_land[(x, y + 1)] = v
+                new_land[(x + 1, y + 1)] = v
+        self.land = new_land
         return self
 
     def normed(self, x, y):
+        ''' normalise a point based upon the surrounding points '''
         pc = 0
         for xo in range(x - 1, x + 2):
             xx = xo % self.x
@@ -79,6 +84,7 @@ class fractalCaves():
         return pc > 4
 
     def antialias(self, x, y):
+        ''' bad antialising '''
         pc = 0
         for xo in range(x - 1, x + 2):
             xx = xo % self.x
@@ -90,21 +96,24 @@ class fractalCaves():
         b = 255 - g
         return (0, g, b)
 
-    def smooth(self, iterations) -> fractalCaves:
+    def smooth(self, iterations) -> FractalCaves:
+        ''' smoothing '''
         for _ in range(iterations):
-            newLand = collections.defaultdict(bool)
+            new_land = collections.defaultdict(bool)
             for x in range(self.x):
                 for y in range(self.y):
-                    newLand[(x, y)] = self.normed(x, y)
-            self.land = newLand
+                    new_land[(x, y)] = self.normed(x, y)
+            self.land = new_land
         return self
 
-    def generate(self) -> fractalCaves:
+    def generate(self) -> FractalCaves:
+        ''' basic generation '''
         self.reset()
         self.smooth(self.iterations)
         return self
 
     def render(self) -> Image:
+        ''' render to a PIL.Image '''
         img = NewImage("RGB", (
             self.x, self.y
         ))
@@ -122,13 +131,13 @@ class fractalCaves():
 
 
 if __name__ == "__main__":
-    t = fractalCaves(32, iterations=2)
-    t.generate()
-    t.double()
-    t.smooth(1)
-    t.double()
-    t.smooth(1)
-    t.double()
-    t.smooth(4)
-    i = t.render()
+    cves = FractalCaves(32, iterations=2)
+    cves.generate()
+    cves.double()
+    cves.smooth(1)
+    cves.double()
+    cves.smooth(1)
+    cves.double()
+    cves.smooth(4)
+    i = cves.render()
     i.save("temp.png", "PNG")
