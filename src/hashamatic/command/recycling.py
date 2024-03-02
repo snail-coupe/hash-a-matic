@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 try:
     from argparse import Namespace
 
-    from ukbinday import BinDayGetter
+    from ukbinday import BinDayGetter  # type: ignore
 
     from hashamatic.command import BotCmd, BotResult
 

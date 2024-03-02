@@ -4,7 +4,7 @@ import collections
 import logging
 import random
 from argparse import ArgumentParser, Namespace
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 from PIL import ImageDraw
 from PIL.Image import Image
@@ -22,13 +22,13 @@ try:
         def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
             return parser
 
-        def run(self, args: Namespace) -> BotResult:
+        def run(self, _args: Namespace) -> BotResult:
             # imageRaw = fractalCaves(256).generate().render()
             t = fractalCaves(64, iterations=2).generate().double()
             t.smooth(1).double().smooth(1).double().smooth(4)
-            imageRaw = t.render()
+            image_raw = t.render()
             return BotResult(
-                imageRaw, tags=self.tags,
+                image_raw, tags=self.tags,
                 alt_text="A computer generated fractal map using the 5:4 algorithm."
             )
 
@@ -39,7 +39,7 @@ except ImportError:
 class fractalCaves():
     ''' a bad implmentation of a fractal map using 5:4 '''
 
-    def __init__(self, x: int = 64, y: int = None, iterations=5):
+    def __init__(self, x: int = 64, y: Optional[int] = None, iterations=5):
         self.x = x
         if y:
             self.y = y
@@ -122,13 +122,13 @@ class fractalCaves():
 
 
 if __name__ == "__main__":
-    t = fractalCaves(32, iterations=2)
-    t.generate()
-    t.double()
-    t.smooth(1)
-    t.double()
-    t.smooth(1)
-    t.double()
-    t.smooth(4)
-    i = t.render()
+    cves = fractalCaves(32, iterations=2)
+    cves.generate()
+    cves.double()
+    cves.smooth(1)
+    cves.double()
+    cves.smooth(1)
+    cves.double()
+    cves.smooth(4)
+    i = cves.render()
     i.save("temp.png", "PNG")

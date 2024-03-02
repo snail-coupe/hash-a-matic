@@ -8,7 +8,7 @@ from typing import Tuple, Optional
 
 import requests
 import PIL.Image
-from speedtest import Speedtest
+from speedtest import Speedtest  # type: ignore
 
 try:
     from argparse import ArgumentParser, Namespace

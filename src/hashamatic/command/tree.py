@@ -17,7 +17,7 @@ try:
         tags: List[str] = ["tree", "🌳", "fractal", "art", "botArt"]
         caption = "Look at this tree I grew. 🌳"
 
-        def run(self, args: Namespace) -> BotResult:
+        def run(self, _args: Namespace) -> BotResult:
             return BotResult(
                 fractalTree().render(), text=self.caption, tags=self.tags,
                 alt_text="A computer generated fractal tree"
@@ -70,7 +70,7 @@ class fractalTree():
         self.branch(draw, angle, base, length)
         for point in self.leaves:
             draw.regular_polygon(
-                (point, random.uniform(3, 6)),
+                (*point, random.uniform(3, 6)),
                 n_sides=7,
                 fill="rgb(0, %d, 0)" % random.uniform(128, 224))
         return img

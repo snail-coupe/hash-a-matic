@@ -75,13 +75,13 @@ class BlocksMaker():
     def __init__(
         self,
         rows: int = 10, columns: int = 10,
-        blockSize: int = 80,
-        borderWidth: int = 4,
+        block_size: int = 80,
+        border_width: int = 4,
     ):
         self.rows = rows
         self.columns = columns
-        self.blockSize = blockSize
-        self.borderWidth = borderWidth
+        self.block_size = block_size
+        self.border_width = border_width
 
     def generate(self):
         self.map = collections.defaultdict(dict)
@@ -107,8 +107,8 @@ class BlocksMaker():
         return self
 
     def render(self) -> Image:
-        bs = self.blockSize
-        bw = self.borderWidth
+        bs = self.block_size
+        bw = self.border_width
         img = NewImage("RGB", (
             bs * self.columns, bs * self.rows
         ))
@@ -117,10 +117,10 @@ class BlocksMaker():
             for c in range(self.columns):
                 if ":%d:%d" % (r, c) in self.map[r][c]:
                     s = int(self.map[r][c][0])
-                    draw.rectangle([
+                    draw.rectangle((
                         (c * bs + bw, r * bs + bw),
                         ((c + s) * bs - bw, (r + s) * bs - bw)
-                    ], "rgb(%d,%d,%d)" % (
+                    ), "rgb(%d,%d,%d)" % (
                         random.choice(range(256)),
                         random.choice(range(256)),
                         random.choice(range(256))
@@ -128,8 +128,8 @@ class BlocksMaker():
         return img
 
     def renderMask(self) -> Image:
-        bs = self.blockSize
-        bw = self.borderWidth
+        bs = self.block_size
+        bw = self.border_width
         mask = NewImage("1", (
             bs * self.columns, bs * self.rows
         ))
@@ -138,8 +138,8 @@ class BlocksMaker():
             for c in range(self.columns):
                 if ":%d:%d" % (r, c) in self.map[r][c]:
                     s = int(self.map[r][c][0])
-                    draw.rectangle([
+                    draw.rectangle((
                         (c * bs + bw, r * bs + bw),
                         ((c + s) * bs - bw, (r + s) * bs - bw)
-                    ], True)
+                    ), True)
         return mask

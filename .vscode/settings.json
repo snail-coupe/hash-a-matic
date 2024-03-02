@@ -1,2 +1,8 @@
 {
+    "flake8.args": [
+        "--extend-ignore=E501"
+    ],
+    "pylint.args": [
+        "--disable=C0301"
+    ]
 }

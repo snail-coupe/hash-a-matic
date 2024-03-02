@@ -213,7 +213,7 @@ class Boggle():
         ) as wordlist:
             st = {
                 x.strip().upper()
-                for x in wordlist.read_text().splitlines()
+                for x in wordlist.read_text(encoding="utf8").splitlines()
             }
 
         board = [list(x) for x in self.grid]

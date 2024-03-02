@@ -18,7 +18,7 @@ try:
         def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
             return parser
 
-        def run(self, args: Namespace) -> BotResult:
+        def run(self, _args: Namespace) -> BotResult:
             imageRaw = NewImage('rgba', (128, 128))
             return BotResult(imageRaw, tags=self.tags)
 
