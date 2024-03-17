@@ -16,7 +16,7 @@ try:
     class Blocks(BotCmd, iRandom):
         ''' A packing of various sized coloured squares into a grid. '''
 
-        tags: List[str] = ["squares", "🔲", "fractal", "art", "botArt"]
+        tags: List[str] = ["squares", "🔲", "ProcGen", "art", "botArt"]
 
         @staticmethod
         def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:

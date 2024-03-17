@@ -16,7 +16,7 @@ try:
     class Tree(BotCmd, iRandom):
         ''' A fractal tree. '''
 
-        tags: List[str] = ["tree", "🌳", "fractal", "art", "botArt"]
+        tags: List[str] = ["tree", "🌳", "ProcGen", "art", "botArt"]
         caption = "Look at this tree I grew. 🌳"
 
         def run(self, _args: Namespace) -> BotResult:

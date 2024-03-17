@@ -16,7 +16,7 @@ try:
     class Plasma(BotCmd, iRandom):
         ''' A randomly generated, multi-coloured, fractal plasma '''
 
-        tags: List[str] = ["plasma", "cloud", "☁️", "fractal", "art", "botArt"]
+        tags: List[str] = ["plasma", "cloud", "☁️", "fractal", "ProcGen", "art", "botArt"]
         caption = "Look at this space cloud I made."
 
         def run(self, _args: Namespace) -> BotResult:

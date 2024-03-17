@@ -18,7 +18,7 @@ try:
     class _Maze(BotCmd):
         ''' Maze Command '''
 
-        tags: List[str] = ["maze", "fractal", "brainTraining"]
+        tags: List[str] = ["maze", "ProcGen", "brainTraining"]
         caption = "Can you find your way through my maze?"
 
         def run(self, _args: Namespace) -> BotResult:
