@@ -162,7 +162,8 @@ class Boggle():
                     (36, 36), letter,
                     anchor="mm", fill="lightgrey", font=font
                 )
-                letter_img = letter_img.rotate(90 * randint(0, 4))
+                # rotate letter, bias to right way up.
+                letter_img = letter_img.rotate(90 * randint(0, 5))
                 img.paste(letter_img, (24+col*88, 24+row*88))
         return img
 
