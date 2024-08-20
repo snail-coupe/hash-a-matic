@@ -155,17 +155,21 @@ def main():
     ''' main () '''
     parser = argparse.ArgumentParser()
     parser.add_argument("bot", choices=bots, help="Bot to run", nargs='?')
-    parser.add_argument("--debug", "-d", action="store_true")
+    parser_verbose = parser.add_mutually_exclusive_group()
+    parser_verbose.add_argument("-q", "--quiet", action="store_true")
+    parser_verbose.add_argument("-d", "--debug", action="store_true")
     parser.add_argument("--dryrun", "-n", action="store_true")
     args = parser.parse_args()
 
+    if args.quiet:
+        loglvl = logging.WARNING
     if args.debug:
         loglvl = logging.DEBUG
     else:
         loglvl = logging.INFO
 
     consolehndlr = logging.StreamHandler()
-    consolehndlr.setLevel(logging.DEBUG)
+    consolehndlr.setLevel(loglvl)
     logfilehndlr = logging.handlers.RotatingFileHandler(
         filename=log_path,
         maxBytes=16384,
@@ -174,7 +178,7 @@ def main():
     logfilehndlr.setLevel(logging.INFO)
 
     logging.basicConfig(
-        level=loglvl, force=True,
+        level=min(logging.INFO, loglvl), force=True,
         handlers=[logfilehndlr, consolehndlr]
     )
 
