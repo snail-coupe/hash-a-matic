@@ -100,7 +100,8 @@ class _Mastodon(BotAccount, iPost, iMessage):
 
             if direct:
                 kwds["visibility"] = "direct"
-                kwds["in_reply_to_id"] = self.find_latest_convo_with(direct)
+                if not in_reply_to:
+                    kwds["in_reply_to_id"] = self.find_latest_convo_with(direct)
             elif not public:
                 kwds["visibility"] = "unlisted"
 
