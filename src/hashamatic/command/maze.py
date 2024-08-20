@@ -218,14 +218,14 @@ class MazeMaker():
 
     def generate(self, xpos=1, ypos=1):
         # set up
-        stack = list()
+        stack = []
         self.maze[(xpos, ypos)].visited = True
         stack.append((xpos, ypos))
 
         # run
         while stack:
-            choices = list()
-            valid_choices = list()
+            choices = []
+            valid_choices = []
             if xpos > 1:
                 choices.append((xpos - 1, ypos))
             if xpos < self.width:
