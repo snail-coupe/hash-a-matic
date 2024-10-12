@@ -163,7 +163,7 @@ def main():
 
     if args.quiet:
         loglvl = logging.WARNING
-    if args.debug:
+    elif args.debug:
         loglvl = logging.DEBUG
     else:
         loglvl = logging.INFO
