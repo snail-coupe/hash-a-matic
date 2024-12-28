@@ -56,6 +56,14 @@ class iRandom:  # pylint:disable=invalid-name
         if your class can be run as a random choice with no input '''
 
 
+class iWallpaper:  # pylint:disable=invalid-name
+    ''' inherit from this is your class has a wallpaper function '''
+
+    def wallpaper(self) -> BotResult:
+        ''' returns an image for 1080x2400 '''
+        raise NotImplementedError
+
+
 class BotCmd():
     ''' This base class specifies an Interface for commands '''
 
@@ -121,6 +129,25 @@ class BotCmd():
         return ret
 
     random_choices = partialmethod(get_choices, iRandom)
+    wallpaper_choices = partialmethod(get_choices, iWallpaper)
+
+
+class WallPaper(BotCmd):
+    ''' Run other commands in wallpaper mode '''
+
+    tags: List[str] = ["wallpaper"]
+
+    @staticmethod
+    def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
+        parser.add_argument("cmd", choices=BotCmd.wallpaper_choices())
+        return parser
+
+    def run(self, args: argparse.Namespace) -> BotResult:
+        cmdclass: BotCmd = BotCmd.commands[args.cmd]
+        result = cmdclass().wallpaper()  # type: ignore
+        result.tags.append("wallpaer")
+
+        return result
 
 
 class Random(BotCmd):

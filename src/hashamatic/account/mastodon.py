@@ -3,6 +3,7 @@
 import io
 from pathlib import Path
 from typing import List, Optional, Dict, Any
+import re
 
 import mastodon  # type: ignore
 import yaml
@@ -134,6 +135,18 @@ class Mastodon(_Mastodon):
     def __init__(self):
         super().__init__()
         self._set_account(credsroot / "crmbl.uk.yaml")
+
+    def get_palette(self):
+        ''' returns a 5 colour palette from: @Color_Palette_Bot@mastodon.art'''
+        colorbot = self.client.account_lookup("@Color_Palette_Bot@mastodon.art")
+        alttext = self.client.account_statuses(
+            colorbot["id"],
+            only_media=True,
+            exclude_replies=True,
+            exclude_reblogs=True,
+            limit=1
+        )[0]["media_attachments"][0]["description"]
+        return re.findall(r"\((#......)\)", alttext)
 
 
 class Griddle(_Mastodon):

@@ -13,7 +13,7 @@ from PIL.Image import Image
 from PIL.Image import new as NewImage
 
 try:
-    from hashamatic.command import BotCmd, BotResult, iRandom
+    from hashamatic.command import BotCmd, BotResult, iRandom, iWallpaper
 
     class _Maze(BotCmd):
         ''' Maze Command '''
@@ -25,7 +25,7 @@ try:
             ''' this runs the command '''
             raise NotImplementedError
 
-    class Maze(_Maze, iRandom):
+    class Maze(_Maze, iRandom, iWallpaper):
         ''' A Random Maze '''
 
         @staticmethod
@@ -60,6 +60,15 @@ try:
             parser = self.add_argparse_arguments(ArgumentParser())
             args = parser.parse_args(f"{size}".split())
             return self.run(args)
+
+        def wallpaper(self) -> BotResult:
+            maker = MazeMaker(width=18, height=40)
+            maker.generate()
+            image_raw = maker.render(60, 3)
+            return BotResult(
+                image_raw, text=self.caption, tags=self.tags,
+                alt_text=f"A computer generated {maker.height} by {maker.width} maze."
+            )
 
     class HeartMaze(_Maze):
         ''' A Random Maze around a Heart '''
@@ -256,7 +265,7 @@ class MazeMaker():
             stack.append((xpos, ypos))
         return self
 
-    def render(self, cell_size: int = 16) -> Image:
+    def render(self, cell_size: int = 16, border: int = 1) -> Image:
         img = NewImage("RGB", (
             self.width * cell_size, self.height * cell_size
         ))
@@ -274,17 +283,17 @@ class MazeMaker():
                 ycs = yos * cell_size
                 if not cell.solid:
                     draw.rectangle((
-                        (xcs + 1, ycs + 1),
-                        (xcs + cell_size - 2, ycs + cell_size - 2)
+                        (xcs + border, ycs + border),
+                        (xcs + cell_size - border - 1, ycs + cell_size - border - 1)
                     ), floor_color)
                 if not cell.left:
-                    draw.rectangle(((xcs, ycs + 1), (xcs + 1, ycs + cell_size - 2)), floor_color)
+                    draw.rectangle(((xcs, ycs + border), (xcs + border, ycs + cell_size - border - 1)), floor_color)
                 if not cell.right:
-                    draw.rectangle(((xcs + cell_size - 2, ycs + 1), (xcs + cell_size - 1, ycs + cell_size - 2)), floor_color)
+                    draw.rectangle(((xcs + cell_size - border - 1, ycs + border), (xcs + cell_size - 1, ycs + cell_size - border - 1)), floor_color)
                 if not cell.top:
-                    draw.rectangle(((xcs + 1, ycs), (xcs + cell_size - 2, ycs + 1)), floor_color)
+                    draw.rectangle(((xcs + border, ycs), (xcs + cell_size - border - 1, ycs + border)), floor_color)
                 if not cell.bottom:
-                    draw.rectangle(((xcs + 1, ycs + cell_size - 2), (xcs + cell_size - 2, ycs + cell_size - 1)), floor_color)
+                    draw.rectangle(((xcs + border, ycs + cell_size - border - 1), (xcs + cell_size - border - 1, ycs + cell_size - 1)), floor_color)
         draw.regular_polygon(
             (cell_size / 2, cell_size / 2, cell_size / 2),
             n_sides=5,
