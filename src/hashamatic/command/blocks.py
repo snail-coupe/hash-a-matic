@@ -10,6 +10,8 @@ from PIL import ImageDraw
 from PIL.Image import Image
 from PIL.Image import new as NewImage
 
+from .Tiles import TileRenderer
+
 try:
     from hashamatic.command import BotCmd, BotResult, iRandom, iWallpaper
 
@@ -22,11 +24,14 @@ try:
         def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
             parser.add_argument("rows", type=int, nargs='?')
             parser.add_argument("columns", type=int, nargs='?')
+            parser.add_argument("--renderer", choices=TileRenderer.get_choices(), default=TileRenderer.get_default())
+            parser.add_argument("--fill_ratio", type=int, choices=range(1, 10), default=1)
             return parser
 
         def run(self, args: Namespace) -> BotResult:
             cols = args.columns
             rows = args.rows
+
             if not rows:
                 rows = random.randint(12, 32)
             else:
@@ -38,9 +43,9 @@ try:
                 cols = max(cols, 1)
                 cols = min(cols, 65)
 
-            b = BlocksMaker(rows, cols)
+            b = BlocksMaker(rows, cols, fill_prob=args.fill_ratio)
             alt_text = [f"A computer generated picture of multicoloured squares of various sizes packed into a {cols} by {rows} grid"]
-            raw_image = b.generate().render()
+            raw_image = b.generate().render(args.renderer)
 
             return BotResult(
                 raw_image, tags=self.tags,
@@ -86,12 +91,14 @@ class BlocksMaker():
         rows: int = 10, columns: int = 10,
         block_size: int = 80,
         border_width: int = 4,
+        fill_prob: int = 1,
     ):
         self.rows = rows
         self.columns = columns
         self.maxs = min(rows, columns) >> 2
         self.block_size = block_size
         self.border_width = border_width
+        self.probf = fill_prob
 
     def generate(self):
         ''' generate the cells '''
@@ -117,7 +124,7 @@ class BlocksMaker():
                         self.map[r + y][c + x] = f"{s}:{r}:{c}"
         return self
 
-    def render(self) -> Image:
+    def render(self, renderer: str = "PlainTile") -> Image:
         ''' render the cells as an image'''
 
         bs = self.block_size
@@ -125,19 +132,20 @@ class BlocksMaker():
         img = NewImage("RGB", (
             bs * self.columns, bs * self.rows
         ))
-        draw = ImageDraw.Draw(img)
+        if renderer in TileRenderer.renderers:
+            tile_renderer = TileRenderer.renderers[renderer]
+        else:
+            tile_renderer = TileRenderer.renderers[
+                TileRenderer.get_default()
+            ]
+
         for r in range(self.rows):
             for c in range(self.columns):
                 if f":{r}:{c}" in self.map[r][c]:
-                    s = int(self.map[r][c][0])
-                    draw.rectangle((
-                        (c * bs + bw, r * bs + bw),
-                        ((c + s) * bs - bw, (r + s) * bs - bw)
-                    ), "rgb(%d,%d,%d)" % (
-                        random.choice(range(256)),
-                        random.choice(range(256)),
-                        random.choice(range(256))
-                    ))
+                    if not random.choice(range(self.probf)):
+                        s = int(self.map[r][c][0])
+                        tile = tile_renderer.render(s*bs, bw)
+                        img.paste(tile, (c*bs, r*bs))
         return img
 
     def render5colour(self, colours: List[str]) -> Image:
@@ -214,18 +222,18 @@ class BlocksMaker():
 
 
 if __name__ == "__main__":
-    # BlocksMaker(20, 9, 120, 6).generate().render().save("temp.png", "PNG")
-    from hashamatic.account.mastodon import Mastodon
-    bot = Mastodon()
-    colors = bot.get_palette()
-    # colors = ["#ad831f", "#bf6e40", "#9c77bb", "#8cd9c3", "#a8f0c4"]
+    BlocksMaker(8, 8, 80, 4).generate().render().save("temp.png", "PNG")
+    # from hashamatic.account.mastodon import Mastodon
+    # bot = Mastodon()
+    # colors = bot.get_palette()
+    # # colors = ["#ad831f", "#bf6e40", "#9c77bb", "#8cd9c3", "#a8f0c4"]
 
-    bm = BlocksMaker(random.randint(12, 32), random.randint(12, 32))
-    bm.probs = 2
-    bm.generate()
-    try:
-        bm.render5colour(colors).save("temp.png", "PNG")
-    except ValueError as e:
-        print("fail!")
-        print(e)
-        bm.render().save("temp.png", "PNG")
+    # bm = BlocksMaker(random.randint(12, 32), random.randint(12, 32))
+    # bm.probs = 2
+    # bm.generate()
+    # try:
+    #     bm.render5colour(colors).save("temp.png", "PNG")
+    # except ValueError as e:
+    #     print("fail!")
+    #     print(e)
+    #     bm.render().save("temp.png", "PNG")
