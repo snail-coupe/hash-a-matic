@@ -1,10 +1,9 @@
-''' fractal tree generation '''
+"""fractal tree generation"""
 
 import logging
 import math
 import random
 from argparse import Namespace
-from typing import List, Set, Tuple
 
 from PIL import ImageDraw
 from PIL.Image import Image
@@ -14,23 +13,25 @@ try:
     from hashamatic.command import BotCmd, BotResult, iRandom
 
     class Tree(BotCmd, iRandom):
-        ''' A fractal tree. '''
+        """A fractal tree."""
 
-        tags: List[str] = ["tree", "🌳", "ProcGen", "art", "botArt"]
+        tags: list[str] = ["tree", "🌳", "ProcGen", "art", "botArt"]
         caption = "Look at this tree I grew. 🌳"
 
         def run(self, _args: Namespace) -> BotResult:
             return BotResult(
-                FractalTree().render(), text=self.caption, tags=self.tags,
-                alt_text="A computer generated fractal tree"
+                FractalTree().render(),
+                text=self.caption,
+                tags=self.tags,
+                alt_text="A computer generated fractal tree",
             )
 
 except ImportError:
     logging.debug("failed to import BotCmd interface")
 
 
-class FractalTree():
-    ''' class to generate fractal trees '''
+class FractalTree:
+    """class to generate fractal trees"""
 
     def __init__(self):
         self.w = self.h = 1024
@@ -38,12 +39,22 @@ class FractalTree():
         self.spread = 30
         self.lr = (-5, 3)
         self.la = (-5, 5)
-        self.leaves: Set[Tuple[int, int]] = set()  # type: ignore
+        self.leaves: set[tuple[float, float]] = set()  # type: ignore
 
-    def branch(self, draw, angle, base, length, depth=1):
-        ''' branch a trunk '''
+    def branch(
+        self,
+        draw: ImageDraw.ImageDraw,
+        angle: float,
+        base: tuple[float, float],
+        length: float,
+        depth: int = 1,
+    ):
+        """branch a trunk"""
 
-        e = (length * math.sin(math.radians(angle)), length * math.cos(math.radians(angle)))
+        e = (
+            length * math.sin(math.radians(angle)),
+            length * math.cos(math.radians(angle)),
+        )
         f = (base[0] + e[0], base[1] + e[1])
         draw.line([base, f], fill="rgb(126, 46, 31)", width=1 + int(length / 10))
         length = length - self.r
@@ -62,10 +73,8 @@ class FractalTree():
             self.leaves.add(f)
 
     def render(self) -> Image:
-        ''' render the tree to a PIL.Image '''
-        img = NewImage("RGB", (
-            self.w, self.h
-        ))
+        """render the tree to a PIL.Image"""
+        img = NewImage("RGB", (self.w, self.h))
         draw = ImageDraw.Draw(img)
 
         angle = -180
@@ -77,9 +86,8 @@ class FractalTree():
         for point in self.leaves:
             green: int = int(random.uniform(128, 224))
             draw.regular_polygon(
-                (*point, random.uniform(3, 6)),
-                n_sides=7,
-                fill=f"rgb(0, {green}, 0)")
+                (*point, random.uniform(3, 6)), n_sides=7, fill=f"rgb(0, {green}, 0)"
+            )
         return img
 
 

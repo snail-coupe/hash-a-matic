@@ -1,4 +1,4 @@
-''' plasma/space cloud '''
+"""plasma/space cloud"""
 
 import collections
 import logging
@@ -14,30 +14,43 @@ try:
     from hashamatic.command import BotCmd, BotResult, iRandom
 
     class Plasma(BotCmd, iRandom):
-        ''' A randomly generated, multi-coloured, fractal plasma '''
+        """A randomly generated, multi-coloured, fractal plasma"""
 
-        tags: List[str] = ["plasma", "cloud", "☁️", "fractal", "ProcGen", "art", "botArt"]
+        tags: List[str] = [
+            "plasma",
+            "cloud",
+            "☁️",
+            "fractal",
+            "ProcGen",
+            "art",
+            "botArt",
+        ]
         caption = "Look at this space cloud I made."
 
         def run(self, _args: Namespace) -> BotResult:
             return BotResult(
-                FractalMap(256).render(), text=self.caption, tags=self.tags,
-                alt_text="A computer generated, multi-coloured, fractal plasma. Generated using the Diamond-Square algorithm."
+                FractalMap(256).render(),
+                text=self.caption,
+                tags=self.tags,
+                alt_text="A computer generated, multi-coloured, fractal plasma. Generated using the Diamond-Square algorithm.",
             )
 except ImportError:
     logging.debug("failed to import BotCmd interface")
 
 
-class FractalMap():
-    ''' a bad implmentation of a cloud fractal:
-        https://en.wikipedia.org/wiki/Diamond-square_algorithm '''
+class FractalMap:
+    """a bad implmentation of a cloud fractal:
+    https://en.wikipedia.org/wiki/Diamond-square_algorithm"""
+
+    @staticmethod
+    def v(x: float) -> float:
+        return random.gauss(0, x)
 
     def __init__(self, block_size: int = 256, xb: int = 1, yb: int = 1):
         self.block_size = block_size
         self.xb = xb
         self.yb = yb
         self.heights: Dict[Tuple[int, int], float] = collections.defaultdict(float)
-        self.v = lambda x: random.gauss(0, x)
 
     def reset(self):
         self.heights = collections.defaultdict(float)
@@ -46,7 +59,7 @@ class FractalMap():
         if (x, y) in self.heights:
             return
 
-        v = list()
+        v: list[float] = list()
         if (x - d, y) in self.heights:
             v.append(self.heights[(x - d, y)])
         if (x + d, y) in self.heights:
@@ -60,7 +73,7 @@ class FractalMap():
     def cross_av(self, x: int, y: int, d: int):
         if (x, y) in self.heights:
             return
-        v = list()
+        v: list[float] = list()
         if (x - d, y - d) in self.heights:
             v.append(self.heights[(x - d, y - d)])
         if (x + d, y - d) in self.heights:
@@ -127,9 +140,7 @@ class FractalMap():
                 self.mid_fill(x, y, s)
 
     def render(self) -> Image:
-        img = NewImage("RGB", (
-            self.block_size * self.xb, self.block_size * self.yb
-        ))
+        img = NewImage("RGB", (self.block_size * self.xb, self.block_size * self.yb))
         draw = ImageDraw.Draw(img)
 
         self.reset()
@@ -148,10 +159,7 @@ class FractalMap():
         blue = dict(self.heights)
 
         for p in self.heights.keys():
-            draw.point([p], (
-                int(red[p]),
-                int(green[p]),
-                int(blue[p])))
+            draw.point([p], (int(red[p]), int(green[p]), int(blue[p])))
 
         return img
 

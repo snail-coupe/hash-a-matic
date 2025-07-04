@@ -1,4 +1,4 @@
-''' Hashamatic module to generate packings of squares '''
+"""Hashamatic module to generate packings of squares"""
 
 import collections
 import logging
@@ -16,16 +16,22 @@ try:
     from hashamatic.command import BotCmd, BotResult, iRandom, iWallpaper
 
     class Blocks(BotCmd, iRandom, iWallpaper):
-        ''' A packing of various sized coloured squares into a grid. '''
+        """A packing of various sized coloured squares into a grid."""
 
         tags: List[str] = ["squares", "🔲", "ProcGen", "art", "botArt"]
 
         @staticmethod
         def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
-            parser.add_argument("rows", type=int, nargs='?')
-            parser.add_argument("columns", type=int, nargs='?')
-            parser.add_argument("--renderer", choices=TileRenderer.get_choices(), default=TileRenderer.get_default())
-            parser.add_argument("--fill_ratio", type=int, choices=range(1, 10), default=1)
+            parser.add_argument("rows", type=int, nargs="?")
+            parser.add_argument("columns", type=int, nargs="?")
+            parser.add_argument(
+                "--renderer",
+                choices=TileRenderer.get_choices(),
+                default=TileRenderer.get_default(),
+            )
+            parser.add_argument(
+                "--fill_ratio", type=int, choices=range(1, 10), default=1
+            )
             return parser
 
         def run(self, args: Namespace) -> BotResult:
@@ -44,13 +50,12 @@ try:
                 cols = min(cols, 65)
 
             b = BlocksMaker(rows, cols, fill_prob=args.fill_ratio)
-            alt_text = [f"A computer generated picture of multicoloured squares of various sizes packed into a {cols} by {rows} grid"]
+            alt_text = [
+                f"A computer generated picture of multicoloured squares of various sizes packed into a {cols} by {rows} grid"
+            ]
             raw_image = b.generate().render(args.renderer)
 
-            return BotResult(
-                raw_image, tags=self.tags,
-                alt_text=" ".join(alt_text)
-            )
+            return BotResult(raw_image, tags=self.tags, alt_text=" ".join(alt_text))
 
         def random(self) -> BotResult:
             size = random.randint(12, 32)
@@ -63,8 +68,9 @@ try:
             b.generate()
             raw_image = b.render()
             return BotResult(
-                raw_image, tags=self.tags,
-                alt_text=f"A computer generated picture of multicoloured squares of various sizes packed into a {b.columns} by {b.rows} grid"
+                raw_image,
+                tags=self.tags,
+                alt_text=f"A computer generated picture of multicoloured squares of various sizes packed into a {b.columns} by {b.rows} grid",
             )
 
 except ImportError:
@@ -78,17 +84,18 @@ except ImportError:
 #             1 in probi chance of growing by 1
 
 
-class BlocksMaker():
-    ''' generate packings of random sized and coloured blocks '''
+class BlocksMaker:
+    """generate packings of random sized and coloured blocks"""
 
-    map: Dict[int, Dict[int, str]] = collections.defaultdict(dict)
+    map: Dict[int, Dict[int, str | None]] = collections.defaultdict(dict)
     # maxs = 5  # max square size
     probs = 7  # 1:x chance of seed square entering growth
     probi = 2  # 1:x chance of growing each pass of growth iteration
 
     def __init__(
         self,
-        rows: int = 10, columns: int = 10,
+        rows: int = 10,
+        columns: int = 10,
         block_size: int = 80,
         border_width: int = 4,
         fill_prob: int = 1,
@@ -101,7 +108,7 @@ class BlocksMaker():
         self.probf = fill_prob
 
     def generate(self):
-        ''' generate the cells '''
+        """generate the cells"""
 
         self.map = collections.defaultdict(dict)
         for r in range(-1, 1 + self.rows):
@@ -125,38 +132,34 @@ class BlocksMaker():
         return self
 
     def render(self, renderer: str = "PlainTile") -> Image:
-        ''' render the cells as an image'''
+        """render the cells as an image"""
 
         bs = self.block_size
         bw = self.border_width
-        img = NewImage("RGB", (
-            bs * self.columns, bs * self.rows
-        ))
+        img = NewImage("RGB", (bs * self.columns, bs * self.rows))
         if renderer in TileRenderer.renderers:
             tile_renderer = TileRenderer.renderers[renderer]
         else:
-            tile_renderer = TileRenderer.renderers[
-                TileRenderer.get_default()
-            ]
+            tile_renderer = TileRenderer.renderers[TileRenderer.get_default()]
 
         for r in range(self.rows):
             for c in range(self.columns):
                 if f":{r}:{c}" in self.map[r][c]:
                     if not random.choice(range(self.probf)):
                         s = int(self.map[r][c][0])
-                        tile = tile_renderer.render(s*bs, bw)
-                        img.paste(tile, (c*bs, r*bs))
+                        tile = tile_renderer.render(s * bs, bw)
+                        img.paste(tile, (c * bs, r * bs))
         return img
 
     def render5colour(self, colours: List[str]) -> Image:
-        ''' render the cells as an image using only 5 colours '''
+        """render the cells as an image using only 5 colours"""
 
         pivotmap: Dict[int, List[Tuple[int, int]]] = collections.defaultdict(list)
         colormap: Dict[Tuple[int, int], int] = {}
 
         # empty colour map
-        for r in range(-1, self.rows+1):
-            for c in range(-1, self.columns+1):
+        for r in range(-1, self.rows + 1):
+            for c in range(-1, self.columns + 1):
                 colormap[(r, c)] = 0
 
         # build up lists of squares by size
@@ -167,57 +170,59 @@ class BlocksMaker():
                     pivotmap[s].append((r, c))
 
         # work out colours
-        colorrange = set(range(1, len(colours)+1))
+        colorrange = set(range(1, len(colours) + 1))
         for s in sorted(pivotmap.keys(), reverse=True):
-            for (r, c) in pivotmap[s]:
+            for r, c in pivotmap[s]:
                 seen: Set[int] = set()
-                for rr in range(r, r+s):
-                    seen.add(colormap[(rr, c-1)])
-                    seen.add(colormap[(rr, c+s)])
-                for cc in range(c, c+s):
-                    seen.add(colormap[(r-1, cc)])
-                    seen.add(colormap[(r+s, cc)])
+                for rr in range(r, r + s):
+                    seen.add(colormap[(rr, c - 1)])
+                    seen.add(colormap[(rr, c + s)])
+                for cc in range(c, c + s):
+                    seen.add(colormap[(r - 1, cc)])
+                    seen.add(colormap[(r + s, cc)])
                 choices = list(colorrange - seen)
                 if not choices:
                     raise ValueError("Something went wrong, no colours left")
                 color = random.choice(choices)
                 # print(seen, choices, color)
-                for rr in range(r, r+s):
-                    for cc in range(c, c+s):
+                for rr in range(r, r + s):
+                    for cc in range(c, c + s):
                         colormap[(rr, cc)] = color
 
         bs = self.block_size
         bw = self.border_width
-        img = NewImage("RGB", (
-            bs * self.columns, bs * self.rows
-        ))
+        img = NewImage("RGB", (bs * self.columns, bs * self.rows))
         draw = ImageDraw.Draw(img)
 
         for s, slist in pivotmap.items():
-            for (r, c) in slist:
-                draw.rectangle((
-                    (c * bs + bw, r * bs + bw),
-                    ((c + s) * bs - bw, (r + s) * bs - bw)
-                ), colours[colormap[(r, c)]-1])
+            for r, c in slist:
+                draw.rectangle(
+                    (
+                        (c * bs + bw, r * bs + bw),
+                        ((c + s) * bs - bw, (r + s) * bs - bw),
+                    ),
+                    colours[colormap[(r, c)] - 1],
+                )
         return img
 
     def render_as_mask(self) -> Image:
-        ''' rander the cells as 1bit image suitable for use as a mask '''
+        """rander the cells as 1bit image suitable for use as a mask"""
 
         bs = self.block_size
         bw = self.border_width
-        mask = NewImage("1", (
-            bs * self.columns, bs * self.rows
-        ))
+        mask = NewImage("1", (bs * self.columns, bs * self.rows))
         draw = ImageDraw.Draw(mask)
         for r in range(self.rows):
             for c in range(self.columns):
                 if f":{r}:{c}" in self.map[r][c]:
                     s = int(self.map[r][c][0])
-                    draw.rectangle((
-                        (c * bs + bw, r * bs + bw),
-                        ((c + s) * bs - bw, (r + s) * bs - bw)
-                    ), True)
+                    draw.rectangle(
+                        (
+                            (c * bs + bw, r * bs + bw),
+                            ((c + s) * bs - bw, (r + s) * bs - bw),
+                        ),
+                        True,
+                    )
         return mask
 
 

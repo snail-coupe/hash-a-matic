@@ -54,7 +54,7 @@ class RSSBot(_Mastodon):
             self.url = config[self.bot]["url"]
 
     @staticmethod
-    def get_ttl(soup) -> Union[timedelta, None]:
+    def get_ttl(soup: BeautifulSoup) -> Union[timedelta, None]:
         ''' attempt to determine TTL for feed as timedelta '''
         ttl = soup.select("rss channel ttl")
         if ttl:
@@ -185,7 +185,7 @@ def main():
     if args.bot:
         bots_to_run = [args.bot]
     else:
-        bots_to_run = list(filter(lambda x: "default" in config[x] and config[x]["default"], bots))
+        bots_to_run = [x for x in bots if config[x].get("default", False)]
 
     logging.debug(bots_to_run)
 

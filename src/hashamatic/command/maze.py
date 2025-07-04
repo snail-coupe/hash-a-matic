@@ -1,4 +1,5 @@
-''' Implement a Maze command '''
+"""Implement a Maze command"""
+
 from __future__ import annotations
 
 import collections
@@ -16,22 +17,22 @@ try:
     from hashamatic.command import BotCmd, BotResult, iRandom, iWallpaper
 
     class _Maze(BotCmd):
-        ''' Maze Command '''
+        """Maze Command"""
 
         tags: List[str] = ["maze", "ProcGen", "brainTraining"]
         caption = "Can you find your way through my maze?"
 
         def run(self, _args: Namespace) -> BotResult:
-            ''' this runs the command '''
+            """this runs the command"""
             raise NotImplementedError
 
     class Maze(_Maze, iRandom, iWallpaper):
-        ''' A Random Maze '''
+        """A Random Maze"""
 
         @staticmethod
         def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
-            parser.add_argument("rows", type=int, nargs='?', default=None)
-            parser.add_argument("columns", type=int, nargs='?', default=None)
+            parser.add_argument("rows", type=int, nargs="?", default=None)
+            parser.add_argument("columns", type=int, nargs="?", default=None)
             return parser
 
         def run(self, args: Namespace) -> BotResult:
@@ -51,8 +52,10 @@ try:
             maker.generate()
             image_raw = maker.render(16)
             return BotResult(
-                image_raw, text=self.caption, tags=self.tags,
-                alt_text=f"A computer generated {rows} by {cols} maze."
+                image_raw,
+                text=self.caption,
+                tags=self.tags,
+                alt_text=f"A computer generated {rows} by {cols} maze.",
             )
 
         def random(self) -> BotResult:
@@ -66,12 +69,14 @@ try:
             maker.generate()
             image_raw = maker.render(60, 3)
             return BotResult(
-                image_raw, text=self.caption, tags=self.tags,
-                alt_text=f"A computer generated {maker.height} by {maker.width} maze."
+                image_raw,
+                text=self.caption,
+                tags=self.tags,
+                alt_text=f"A computer generated {maker.height} by {maker.width} maze.",
             )
 
     class HeartMaze(_Maze):
-        ''' A Random Maze around a Heart '''
+        """A Random Maze around a Heart"""
 
         tags = _Maze.tags + ["❤️"]
 
@@ -90,7 +95,7 @@ try:
             [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ]
 
         @staticmethod
@@ -102,28 +107,32 @@ try:
             maker.apply_shape(self.h, 4, 4)
             img = maker.generate().render(16)
             return BotResult(
-                img, text=self.caption, tags=self.tags,
-                alt_text="A computer generated 23 by 23 maze with a heart in the middle."
+                img,
+                text=self.caption,
+                tags=self.tags,
+                alt_text="A computer generated 23 by 23 maze with a heart in the middle.",
             )
 
     class TextMaze(_Maze):
-        ''' A Random Maze around some text '''
+        """A Random Maze around some text"""
 
         @staticmethod
         def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
-            parser.add_argument("word", type=str, nargs='+')
+            parser.add_argument("word", type=str, nargs="+")
             return parser
 
         def run(self, args: Namespace) -> BotResult:
             maker = MazeMaker.from_text(args.word, 4)
             img = maker.generate().render(8)
             return BotResult(
-                img, text=self.caption, tags=self.tags,
-                alt_text=f"A computer generated {maker.height} by {maker.width} maze, containing the text: {args.word}."
+                img,
+                text=self.caption,
+                tags=self.tags,
+                alt_text=f"A computer generated {maker.height} by {maker.width} maze, containing the text: {args.word}.",
             )
 
     class EmojiMaze(_Maze):
-        ''' A Random Maze around an emoji '''
+        """A Random Maze around an emoji"""
 
         @staticmethod
         def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
@@ -134,16 +143,19 @@ try:
             maker = MazeMaker.from_emoji(args.emoji, 8)
             img = maker.generate().render(8)
             return BotResult(
-                img, text=self.caption, tags=self.tags + [args.emoji],
-                alt_text=f"A computer generated {maker.height} by {maker.width} maze, containing the emoji: {args.emoji}."
+                img,
+                text=self.caption,
+                tags=self.tags + [args.emoji],
+                alt_text=f"A computer generated {maker.height} by {maker.width} maze, containing the emoji: {args.emoji}.",
             )
 
 except ImportError:
     logging.debug("failed to import BotCmd interface")
 
 
-class MazeCell():
-    ''' represents one cell within the maze '''
+class MazeCell:
+    """represents one cell within the maze"""
+
     def __init__(self):
         self.solid = False
         self.visited = False
@@ -162,9 +174,9 @@ class MazeCell():
         return f"{bits:4b}"
 
 
-class MazeMaker():
-    '''
-        https://en.wikipedia.org/wiki/Maze_generation_algorithm '''
+class MazeMaker:
+    """
+    https://en.wikipedia.org/wiki/Maze_generation_algorithm"""
 
     def __init__(self, width: int = 48, height: Optional[int] = None):
         self.width = self.height = width
@@ -174,18 +186,22 @@ class MazeMaker():
 
     @classmethod
     def from_text(cls, text: Union[Sequence[str], str], padding: int) -> MazeMaker:
-        ''' generates a MazeMaker containing text '''
+        """generates a MazeMaker containing text"""
         if isinstance(text, collections.abc.Sequence):
             if len(text) > 3:
                 text = text[:3]
             text = "\n".join(text)
-        fnt = ImageFont.truetype('/usr/share/fonts/truetype/noto/NotoMono-Regular.ttf', 32)
-        (left, top, right, bottom) = ImageDraw.Draw(NewImage('1', (1, 1))).multiline_textbbox((0, 0), text, font=fnt)
+        fnt = ImageFont.truetype(
+            "/usr/share/fonts/truetype/noto/NotoMono-Regular.ttf", 32
+        )
+        (left, top, right, bottom) = ImageDraw.Draw(
+            NewImage("1", (1, 1))
+        ).multiline_textbbox((0, 0), text, font=fnt)
         logging.debug("%d %d %d %d", left, top, right, bottom)
         maker = cls(right + 2 * padding, bottom + 2 * padding)
-        im = NewImage('1', (right + 2 * padding, bottom + 2 * padding))
+        im = NewImage("1", (right + 2 * padding, bottom + 2 * padding))
         d = ImageDraw.Draw(im)
-        d.multiline_text((padding + 1, padding), text, 1, font=fnt, align='center')
+        d.multiline_text((padding + 1, padding), text, 1, font=fnt, align="center")
         px = im.load()
         for xpos in range(0, right + 2 * padding):
             for ypos in range(0, bottom + 2 * padding):
@@ -196,14 +212,18 @@ class MazeMaker():
 
     @classmethod
     def from_emoji(cls, emoji: str, padding: int) -> MazeMaker:
-        ''' returns a MazeMaker that makes a maze around an emoji '''
-        fnt = ImageFont.truetype('/usr/share/fonts/truetype/ancient-scripts/Symbola_hint.ttf', 48)
-        (left, top, right, bottom) = ImageDraw.Draw(NewImage('1', (1, 1))).multiline_textbbox((0, 0), emoji[:1], font=fnt)
+        """returns a MazeMaker that makes a maze around an emoji"""
+        fnt = ImageFont.truetype(
+            "/usr/share/fonts/truetype/ancient-scripts/Symbola_hint.ttf", 48
+        )
+        (left, top, right, bottom) = ImageDraw.Draw(
+            NewImage("1", (1, 1))
+        ).multiline_textbbox((0, 0), emoji[:1], font=fnt)
         logging.debug("%d %d %d %d", left, top, right, bottom)
         maker = cls(right + 2 * padding, bottom + 2 * padding)
-        im = NewImage('1', (right + 2 * padding, bottom + 2 * padding))
+        im = NewImage("1", (right + 2 * padding, bottom + 2 * padding))
         d = ImageDraw.Draw(im)
-        d.multiline_text((padding + 1, padding), emoji, 1, font=fnt, align='center')
+        d.multiline_text((padding + 1, padding), emoji, 1, font=fnt, align="center")
         px = im.load()
         for xpos in range(0, right + 2 * padding):
             for ypos in range(0, bottom + 2 * padding):
@@ -212,8 +232,8 @@ class MazeMaker():
                     maker.maze[(xpos, ypos)].solid = True
         return maker
 
-    def apply_shape(self, shape: List[List[int]], xos, yos):
-        ''' applies the supplied shape as a solid section of maze '''
+    def apply_shape(self, shape: List[List[int]], xos: int, yos: int):
+        """applies the supplied shape as a solid section of maze"""
         for ypos, xdata in enumerate(shape):
             for xpos, solid in enumerate(xdata):
                 if solid:
@@ -225,16 +245,16 @@ class MazeMaker():
             self.generate(xos, yos)
         return self.maze[(xos, yos)]
 
-    def generate(self, xpos=1, ypos=1):
+    def generate(self, xpos: int = 1, ypos: int = 1):
         # set up
-        stack = []
+        stack: list[tuple[int, int]] = []
         self.maze[(xpos, ypos)].visited = True
         stack.append((xpos, ypos))
 
         # run
         while stack:
-            choices = []
-            valid_choices = []
+            choices: list[tuple[int, int]] = []
+            valid_choices: list[tuple[int, int]] = []
             if xpos > 1:
                 choices.append((xpos - 1, ypos))
             if xpos < self.width:
@@ -266,15 +286,13 @@ class MazeMaker():
         return self
 
     def render(self, cell_size: int = 16, border: int = 1) -> Image:
-        img = NewImage("RGB", (
-            self.width * cell_size, self.height * cell_size
-        ))
+        img = NewImage("RGB", (self.width * cell_size, self.height * cell_size))
         draw = ImageDraw.Draw(img)
 
         floor_color = "rgb(%d,%d,%d)" % (
             random.choice(range(128, 256)),
             random.choice(range(128, 256)),
-            random.choice(range(128, 256))
+            random.choice(range(128, 256)),
         )
         for xos in range(0, self.width):
             for yos in range(0, self.height):
@@ -282,37 +300,69 @@ class MazeMaker():
                 xcs = xos * cell_size
                 ycs = yos * cell_size
                 if not cell.solid:
-                    draw.rectangle((
-                        (xcs + border, ycs + border),
-                        (xcs + cell_size - border - 1, ycs + cell_size - border - 1)
-                    ), floor_color)
+                    draw.rectangle(
+                        (
+                            (xcs + border, ycs + border),
+                            (
+                                xcs + cell_size - border - 1,
+                                ycs + cell_size - border - 1,
+                            ),
+                        ),
+                        floor_color,
+                    )
                 if not cell.left:
-                    draw.rectangle(((xcs, ycs + border), (xcs + border, ycs + cell_size - border - 1)), floor_color)
+                    draw.rectangle(
+                        (
+                            (xcs, ycs + border),
+                            (xcs + border, ycs + cell_size - border - 1),
+                        ),
+                        floor_color,
+                    )
                 if not cell.right:
-                    draw.rectangle(((xcs + cell_size - border - 1, ycs + border), (xcs + cell_size - 1, ycs + cell_size - border - 1)), floor_color)
+                    draw.rectangle(
+                        (
+                            (xcs + cell_size - border - 1, ycs + border),
+                            (xcs + cell_size - 1, ycs + cell_size - border - 1),
+                        ),
+                        floor_color,
+                    )
                 if not cell.top:
-                    draw.rectangle(((xcs + border, ycs), (xcs + cell_size - border - 1, ycs + border)), floor_color)
+                    draw.rectangle(
+                        (
+                            (xcs + border, ycs),
+                            (xcs + cell_size - border - 1, ycs + border),
+                        ),
+                        floor_color,
+                    )
                 if not cell.bottom:
-                    draw.rectangle(((xcs + border, ycs + cell_size - border - 1), (xcs + cell_size - border - 1, ycs + cell_size - 1)), floor_color)
+                    draw.rectangle(
+                        (
+                            (xcs + border, ycs + cell_size - border - 1),
+                            (xcs + cell_size - border - 1, ycs + cell_size - 1),
+                        ),
+                        floor_color,
+                    )
         draw.regular_polygon(
             (cell_size / 2, cell_size / 2, cell_size / 2),
             n_sides=5,
             fill="rgb(0,192,0)",
-            rotation=-90
+            rotation=-90,
         )
         draw.regular_polygon(
-            (self.width * cell_size - cell_size / 2, self.height * cell_size - cell_size / 2, cell_size / 2),
+            (
+                self.width * cell_size - cell_size / 2,
+                self.height * cell_size - cell_size / 2,
+                cell_size / 2,
+            ),
             n_sides=5,
             fill="rgb(192,0,0)",
-            rotation=90
+            rotation=90,
         )
 
         return img
 
     def render_as_mask(self, cell_size: int = 16) -> Image:
-        mask = NewImage("1", (
-            self.width * cell_size, self.height * cell_size
-        ))
+        mask = NewImage("1", (self.width * cell_size, self.height * cell_size))
         draw = ImageDraw.Draw(mask)
 
         for xos in range(0, self.width):
@@ -320,18 +370,34 @@ class MazeMaker():
                 cell = self.get_cell(xos + 1, yos + 1)
                 xcs = xos * cell_size
                 ycs = yos * cell_size
-                draw.rectangle((
-                    (xcs + 1, ycs + 1),
-                    (xcs + cell_size - 2, ycs + cell_size - 2)
-                ), True)
+                draw.rectangle(
+                    ((xcs + 1, ycs + 1), (xcs + cell_size - 2, ycs + cell_size - 2)),
+                    True,
+                )
                 if not cell.left:
-                    draw.rectangle(((xcs, ycs + 1), (xcs + 1, ycs + cell_size - 2)), True)
+                    draw.rectangle(
+                        ((xcs, ycs + 1), (xcs + 1, ycs + cell_size - 2)), True
+                    )
                 if not cell.right:
-                    draw.rectangle(((xcs + cell_size - 2, ycs + 1), (xcs + cell_size - 1, ycs + cell_size - 2)), True)
+                    draw.rectangle(
+                        (
+                            (xcs + cell_size - 2, ycs + 1),
+                            (xcs + cell_size - 1, ycs + cell_size - 2),
+                        ),
+                        True,
+                    )
                 if not cell.top:
-                    draw.rectangle(((xcs + 1, ycs), (xcs + cell_size - 2, ycs + 1)), True)
+                    draw.rectangle(
+                        ((xcs + 1, ycs), (xcs + cell_size - 2, ycs + 1)), True
+                    )
                 if not cell.bottom:
-                    draw.rectangle(((xcs + 1, ycs + cell_size - 2), (xcs + cell_size - 2, ycs + cell_size - 1)), True)
+                    draw.rectangle(
+                        (
+                            (xcs + 1, ycs + cell_size - 2),
+                            (xcs + cell_size - 2, ycs + cell_size - 1),
+                        ),
+                        True,
+                    )
 
         return mask
 
