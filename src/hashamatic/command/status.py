@@ -1,4 +1,4 @@
-''' various status botCmds '''
+"""various status botCmds"""
 
 import hashlib
 import io
@@ -16,23 +16,23 @@ try:
     from hashamatic.command import BotCmd, BotResult
 
     class Hash(BotCmd):
-        ''' Guess the hash '''
+        """Guess the hash"""
+
         def run(self, _args: Namespace) -> BotResult:
             r = os.urandom(128)
             m = hashlib.md5()
             m.update(r)
-            return BotResult(
-                text=m.digest().hex(),
-                tags=["hash"]
-            )
+            return BotResult(text=m.digest().hex(), tags=["hash"])
 
     class Status(BotCmd):
-        ''' Basic status information about the server housing the bot. '''
+        """Basic status information about the server housing the bot."""
+
         def run(self, _args: Namespace) -> BotResult:
             return BotResult(text=StatusGetter().status())
 
     class SpeedTest(BotCmd):
-        ''' Perform a speedtest of the server housing the bot. '''
+        """Perform a speedtest of the server housing the bot."""
+
         def run(self, args: Namespace) -> BotResult:
             (text, image) = StatusGetter().speedtest(args.graphical)
             return BotResult(image=image, text=text)
@@ -46,13 +46,14 @@ except ImportError:
     logging.debug("failed to import BotCmd interface")
 
 
-class StatusGetter():
-    ''' class to return various status info '''
+class StatusGetter:
+    """class to return various status info"""
+
     def __init__(self):
         pass
 
     def friendly_time(self, t: float) -> str:
-        ''' convert float based timedelta into something more friendly '''
+        """convert float based timedelta into something more friendly"""
         t = int(t)
         sec = int(t % 60)
         t = t / 60
@@ -62,41 +63,42 @@ class StatusGetter():
         t = t / 24
         return f"{int(t)}d{hr:02d}:{mm:02d}:{sec:02d}"
 
-    def speedtest(self, share=False) -> Tuple[str, Optional[PIL.Image.Image]]:
-        ''' performs a speedtest of the internet connection '''
+    def speedtest(self, share: bool = False) -> Tuple[str, Optional[PIL.Image.Image]]:
+        """performs a speedtest of the internet connection"""
         s = Speedtest()
-        url = None
 
-        upload = s.upload() / 1000 / 1000
-        download = s.download() / 1000 / 1000
+        upload: float = s.upload() / 1000 / 1000  # type: ignore
+        download: float = s.download() / 1000 / 1000  # type: ignore
         ping = s.results.ping
         if share:
-            url = s.results.share()
-            data = requests.get(url, timeout=20)
+            url: str = s.results.share()  # type: ignore
+            data = requests.get(url, timeout=20)  # type: ignore
             image = PIL.Image.open(io.BytesIO(data.content))
         else:
             image = None
 
+        # pylint: disable=consider-using-f-string
         return "Ping: %3.2f\nUpld: %3.2f\nDnld: %3.2f\n" % (
-            ping, upload, download,
+            ping,
+            upload,
+            download,
         ), image
 
     def status(self) -> str:
-        ''' return uptime, idle and temp '''
-        with open('/proc/uptime', "r", encoding="ascii") as f:
-            (uptime, idletime) = [
-                float(i) for i in f.readline().split(" ")
-            ]
+        """return uptime, idle and temp"""
+        with open("/proc/uptime", "r", encoding="ascii") as f:
+            (uptime, idletime) = [float(i) for i in f.readline().split(" ")]
         try:
-            with open(
-                "/sys/class/thermal/thermal_zone0/temp",
-                encoding="ascii"
-            ) as f:
+            with open("/sys/class/thermal/thermal_zone0/temp", encoding="ascii") as f:
                 temp = float(f.readline())
         except FileNotFoundError:
             temp = 0
+
+        # pylint: disable=consider-using-f-string
         return "Uptime: %s\nIdle: %.2f\nTemp: %3.3f\n" % (
-            self.friendly_time(uptime), idletime / (4 * uptime), temp / 1000,
+            self.friendly_time(uptime),
+            idletime / (4 * uptime),
+            temp / 1000,
         )
 
 

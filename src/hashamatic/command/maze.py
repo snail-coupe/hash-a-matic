@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import collections
-import collections.abc
 import logging
 import random
 from argparse import ArgumentParser, Namespace
-from typing import Dict, List, Sequence, Tuple, Union, Optional
+from typing import Dict, List, Tuple, Union, Optional
 
 from PIL import ImageDraw, ImageFont
 from PIL.Image import Image
@@ -185,9 +184,9 @@ class MazeMaker:
         self.maze: Dict[Tuple[int, int], MazeCell] = collections.defaultdict(MazeCell)
 
     @classmethod
-    def from_text(cls, text: Union[Sequence[str], str], padding: int) -> MazeMaker:
+    def from_text(cls, text: Union[List[str], str], padding: int) -> MazeMaker:
         """generates a MazeMaker containing text"""
-        if isinstance(text, collections.abc.Sequence):
+        if isinstance(text, list):
             if len(text) > 3:
                 text = text[:3]
             text = "\n".join(text)
@@ -241,11 +240,13 @@ class MazeMaker:
                     self.maze[(xpos + xos + 1, ypos + yos + 1)].solid = True
 
     def get_cell(self, xos: int, yos: int) -> MazeCell:
+        """get info about a cell of the maze, generating if needed."""
         if not self.maze[(xos, yos)].visited:
             self.generate(xos, yos)
         return self.maze[(xos, yos)]
 
     def generate(self, xpos: int = 1, ypos: int = 1):
+        """generate a maze"""
         # set up
         stack: list[tuple[int, int]] = []
         self.maze[(xpos, ypos)].visited = True
@@ -280,16 +281,17 @@ class MazeMaker:
             elif new_y > ypos:
                 self.maze[(new_x, new_y)].top = self.maze[(xpos, ypos)].bottom = False
             else:
-                raise Exception("How did you get here?????")
+                raise RuntimeError("How did you get here?????")
             (xpos, ypos) = (new_x, new_y)
             stack.append((xpos, ypos))
         return self
 
     def render(self, cell_size: int = 16, border: int = 1) -> Image:
+        """render the maze as an image."""
         img = NewImage("RGB", (self.width * cell_size, self.height * cell_size))
         draw = ImageDraw.Draw(img)
 
-        floor_color = "rgb(%d,%d,%d)" % (
+        floor_color = "rgb(%d,%d,%d)" % (  # pylint: disable=consider-using-f-string
             random.choice(range(128, 256)),
             random.choice(range(128, 256)),
             random.choice(range(128, 256)),
@@ -362,6 +364,7 @@ class MazeMaker:
         return img
 
     def render_as_mask(self, cell_size: int = 16) -> Image:
+        """rend the maze as a bitwise 'mask'"""
         mask = NewImage("1", (self.width * cell_size, self.height * cell_size))
         draw = ImageDraw.Draw(mask)
 

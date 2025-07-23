@@ -1,4 +1,4 @@
-''' attempt to make some sort of caverns '''
+"""attempt to make some sort of caverns"""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ try:
     from hashamatic.command import BotCmd, BotResult, iRandom
 
     class Caves(BotCmd, iRandom):
-        ''' a bad implmentation of a fractal map '''
+        """a bad implmentation of a fractal map"""
 
         tags: List[str] = ["art", "botArt"]
 
@@ -30,18 +30,19 @@ try:
             t.smooth(1).double().smooth(1).double().smooth(4)
             image_raw = t.render()
             return BotResult(
-                image_raw, tags=self.tags,
-                alt_text="A computer generated fractal map using the 5:4 algorithm."
+                image_raw,
+                tags=self.tags,
+                alt_text="A computer generated fractal map using the 5:4 algorithm.",
             )
 
 except ImportError:
     logging.debug("failed to import BotCmd interface")
 
 
-class FractalCaves():
-    ''' a bad implmentation of a fractal map using 5:4 '''
+class FractalCaves:
+    """a bad implmentation of a fractal map using 5:4"""
 
-    def __init__(self, x: int = 64, y: Optional[int] = None, iterations=5):
+    def __init__(self, x: int = 64, y: Optional[int] = None, iterations: int = 5):
         self.x = x
         if y:
             self.y = y
@@ -51,15 +52,15 @@ class FractalCaves():
         self.land: Dict[Tuple[int, int], bool] = collections.defaultdict(bool)
 
     def reset(self):
-        ''' reset the land '''
+        """reset the land"""
         self.land = collections.defaultdict(bool)
         for x in range(self.x):
             for y in range(self.y):
                 self.land[(x, y)] = random.random() > 0.55
 
     def double(self) -> FractalCaves:
-        ''' double the resolution '''
-        new_land = collections.defaultdict(bool)
+        """double the resolution"""
+        new_land: Dict[Tuple[int, int], bool] = collections.defaultdict(bool)
         self.x = self.x * 2
         self.y = self.y * 2
         for x in range(0, self.x, 2):
@@ -72,8 +73,8 @@ class FractalCaves():
         self.land = new_land
         return self
 
-    def normed(self, x, y):
-        ''' normalise a point based upon the surrounding points '''
+    def normed(self, x: int, y: int) -> bool:
+        """normalise a point based upon the surrounding points"""
         pc = 0
         for xo in range(x - 1, x + 2):
             xx = xo % self.x
@@ -83,8 +84,8 @@ class FractalCaves():
                     pc = pc + 1
         return pc > 4
 
-    def antialias(self, x, y):
-        ''' bad antialising '''
+    def antialias(self, x: int, y: int):
+        """bad antialising"""
         pc = 0
         for xo in range(x - 1, x + 2):
             xx = xo % self.x
@@ -96,10 +97,10 @@ class FractalCaves():
         b = 255 - g
         return (0, g, b)
 
-    def smooth(self, iterations) -> FractalCaves:
-        ''' smoothing '''
+    def smooth(self, iterations: int) -> FractalCaves:
+        """smoothing"""
         for _ in range(iterations):
-            new_land = collections.defaultdict(bool)
+            new_land: Dict[Tuple[int, int], bool] = collections.defaultdict(bool)
             for x in range(self.x):
                 for y in range(self.y):
                     new_land[(x, y)] = self.normed(x, y)
@@ -107,16 +108,14 @@ class FractalCaves():
         return self
 
     def generate(self) -> FractalCaves:
-        ''' basic generation '''
+        """basic generation"""
         self.reset()
         self.smooth(self.iterations)
         return self
 
     def render(self) -> Image:
-        ''' render to a PIL.Image '''
-        img = NewImage("RGB", (
-            self.x, self.y
-        ))
+        """render to a PIL.Image"""
+        img = NewImage("RGB", (self.x, self.y))
         draw = ImageDraw.Draw(img)
 
         for p in self.land.keys():

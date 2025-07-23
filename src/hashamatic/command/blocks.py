@@ -10,7 +10,7 @@ from PIL import ImageDraw
 from PIL.Image import Image
 from PIL.Image import new as NewImage
 
-from .Tiles import TileRenderer
+from .tiles import TileRenderer
 
 try:
     from hashamatic.command import BotCmd, BotResult, iRandom, iWallpaper
@@ -87,7 +87,7 @@ except ImportError:
 class BlocksMaker:
     """generate packings of random sized and coloured blocks"""
 
-    map: Dict[int, Dict[int, str | None]] = collections.defaultdict(dict)
+    map: Dict[int, Dict[int, str]]
     # maxs = 5  # max square size
     probs = 7  # 1:x chance of seed square entering growth
     probi = 2  # 1:x chance of growing each pass of growth iteration
@@ -106,6 +106,7 @@ class BlocksMaker:
         self.block_size = block_size
         self.border_width = border_width
         self.probf = fill_prob
+        self.map = collections.defaultdict(dict)
 
     def generate(self):
         """generate the cells"""
@@ -113,7 +114,7 @@ class BlocksMaker:
         self.map = collections.defaultdict(dict)
         for r in range(-1, 1 + self.rows):
             for c in range(-1, 1 + self.columns):
-                self.map[r][c] = None
+                self.map[r][c] = ""
         for r in range(self.rows):
             for c in range(self.columns):
                 if self.map[r][c]:

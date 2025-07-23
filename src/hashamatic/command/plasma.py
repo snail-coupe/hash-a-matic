@@ -44,6 +44,7 @@ class FractalMap:
 
     @staticmethod
     def v(x: float) -> float:
+        """calculate a delta"""
         return random.gauss(0, x)
 
     def __init__(self, block_size: int = 256, xb: int = 1, yb: int = 1):
@@ -53,9 +54,11 @@ class FractalMap:
         self.heights: Dict[Tuple[int, int], float] = collections.defaultdict(float)
 
     def reset(self):
-        self.heights = collections.defaultdict(float)
+        """clear out the current state."""
+        self.heights.clear()
 
     def plus_av(self, x: int, y: int, d: int):
+        """perform the Plus Averaging step"""
         if (x, y) in self.heights:
             return
 
@@ -71,6 +74,7 @@ class FractalMap:
         self.heights[(x, y)] = sum(v) / len(v) + self.v(d)
 
     def cross_av(self, x: int, y: int, d: int):
+        """perform the Cross averagin step"""
         if (x, y) in self.heights:
             return
         v: list[float] = list()
@@ -85,6 +89,7 @@ class FractalMap:
         self.heights[(x, y)] = sum(v) / len(v) + self.v(d)
 
     def mid_fill(self, x: int, y: int, s: int):
+        """perform a mid-fill step"""
         # A.2.A
         # .3.3.
         # 2.1.2
@@ -114,6 +119,7 @@ class FractalMap:
             self.mid_fill(x + m, y + m, m)
 
     def normalise(self):
+        """normalise the heights to the rane 0-255"""
         mn = mx = self.heights[(0, 0)]
         for d in self.heights.values():
             if d < mn:
@@ -126,6 +132,7 @@ class FractalMap:
             self.heights[p] = (self.heights[p] - mn) * f
 
     def render_blocks(self):
+        """generate the plasma"""
         s = self.block_size
         m = int(s / 2)
         for xb in range(0, self.xb):
@@ -140,6 +147,7 @@ class FractalMap:
                 self.mid_fill(x, y, s)
 
     def render(self) -> Image:
+        """render the plasma"""
         img = NewImage("RGB", (self.block_size * self.xb, self.block_size * self.yb))
         draw = ImageDraw.Draw(img)
 

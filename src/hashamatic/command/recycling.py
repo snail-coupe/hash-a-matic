@@ -28,7 +28,7 @@ except ImportError:
 
 
 if __name__ == "__main__":
-    from ukbinday import BinDayGetter  # type: ignore
+    from ukbinday import BinDayGetter  # type: ignore # pylint: disable=ungrouped-imports
 
     cliparser = ArgumentParser()
     cliparser.add_argument("number", nargs="?", type=str, default=None)
