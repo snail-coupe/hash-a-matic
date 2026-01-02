@@ -68,7 +68,7 @@ class RSSBot(_Mastodon):
             xml_path = cache_path / f"{self.url.split('//')[1]}"
             if not xml_path.parent.exists():
                 xml_path.parent.mkdir(parents=True)
-            oguids: Dict[str, Any]
+            oguids: Dict[str, list[str]]
             if guid_path.exists():
                 with guid_path.open("r") as guid_io:
                     oguids = yaml.load(guid_io, yaml.SafeLoader)
@@ -135,10 +135,11 @@ class RSSBot(_Mastodon):
 
             # remove anything published/updated more than a week ago from cache
             weekold = datetime.now().timestamp() - timedelta(days=7).total_seconds()
-            guids: Dict[str, Any] = dict(filter(
-                lambda x: parse_item_time(x[1][0]).timestamp() < weekold,
-                oguids.items()
-            ))
+            # guids: Dict[str, list[str]] = dict(filter(
+            #     lambda x: parse_item_time(x[1][0]).timestamp() < weekold,
+            #     oguids.items()
+            # ))
+            guids = {k:v for k,v in oguids.items() if parse_item_time(v[0]).timestamp() > weekold}
             # now merge in everything in currently feed
             guids.update(nguids)
             if not dryrun:
@@ -147,7 +148,7 @@ class RSSBot(_Mastodon):
                 logging.debug("%s", yaml.dump(guids, Dumper=yaml.SafeDumper))
 
         except Exception as exc:
-            logging.debug(exc)
+            logging.warning(exc)
             raise
 
 
